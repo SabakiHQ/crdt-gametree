@@ -23,5 +23,8 @@
   "bugs": {
     "url": "https://github.com/SabakiHQ/crdt-gametree/issues"
   },
-  "homepage": "https://github.com/SabakiHQ/crdt-gametree"
+  "homepage": "https://github.com/SabakiHQ/crdt-gametree",
+  "dependencies": {
+    "uuid": "^3.3.2"
+  }
 }
