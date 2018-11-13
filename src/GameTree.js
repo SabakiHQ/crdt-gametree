@@ -125,7 +125,9 @@ class GameTree extends EventEmitter {
         }
     }
 
-    flush(steps) {
+    flush(steps = null) {
+        if (steps == null) steps = this.operations.length
+
         let operations = this.operations.splice(0, steps)
 
         for (let {type, payload} of operations) {
