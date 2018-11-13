@@ -6,12 +6,16 @@ module.exports = class GameTree extends EventEmitter {
         this.id = id == null ? uuid() : id
         this.timestamp = 0
 
-        this.operations = []
+        this.root = sha1('')
         this.base = Object.assign({
-            node: {},
+            node: {
+                [root]: {}
+            },
             parent: {},
             children: {}
         }, base)
+
+        this.operations = []
     }
 
     applyOperation(operation) {
