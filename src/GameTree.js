@@ -49,23 +49,31 @@ module.exports = class GameTree extends EventEmitter {
     }
 
     appendNode(parent, data) {
-        this._pushOperation('appendNode', {
-            parent,
-            id: sha1(parent, this.id, this.timestamp),
-            data
-        })
+        let id = sha1(parent, this.id, this.timestamp)
+
+        this._pushOperation('appendNode', {parent, id, data})
+
+        return id
     }
 
     removeNode(id) {
         this._pushOperation('removeNode', {id})
     }
 
-    addToAttribute(id, attribute, value) {
-        this._pushOperation('addToAttribute', {id, attribute, value})
+    addToProperty(id, property, value) {
+        this._pushOperation('addToProperty', {id, property, value})
     }
 
-    removeFromAttribute(id, attribute, value) {
-        this._pushOperation('removeFromAttribute', {id, attribute, value})
+    removeFromProperty(id, property, value) {
+        this._pushOperation('removeFromProperty', {id, property, value})
+    }
+
+    updateProperty(id, property, value) {
+        this._pushOperation('updateProperty', {id, property, value})
+    }
+
+    removeProperty(id, property) {
+        this._pushOperation('updateProperty', {id, property, value: null})
     }
 
     updateAttribute(id, attribute, value) {
