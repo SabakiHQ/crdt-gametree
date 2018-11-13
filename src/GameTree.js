@@ -52,12 +52,24 @@ module.exports = class GameTree extends EventEmitter {
         this.emit('operation', operation)
     }
 
-    appendNode(parent, data) {
+    appendNode(parent, node) {
         let id = sha1(parent, this.id, this.timestamp)
 
-        this._pushOperation('appendNode', {parent, id, data})
+        this._pushOperation('appendNode', {parent, id, node})
 
         return id
+    }
+
+    appendNodes(parent, data) {
+        let id = parent
+        let ids = []
+
+        for (let node of data) {
+            id = this.appendNode(id, node)
+            ids.push(id)
+        }
+
+        return
     }
 
     removeNode(id) {
@@ -76,12 +88,47 @@ module.exports = class GameTree extends EventEmitter {
         this._pushOperation('updateProperty', {id, property, values})
     }
 
+    removeProperty(id, property) {
+        this._pushOperation('updateProperty', {id, property, values: null})
+    }
+
+    _addToPropertyOnNode(node, property, value) {
+        if (node == null) continue
+
+        if (property in node) {
+            if (!node[property].includes(value)) {
+                node[property].push(value)
+            }
+        } else {
+            node[property] = [value]
+        }
+    }
+
+    _removeFromPropertyOnNode(node, property, value) {
+        if (node == null) continue
+
+        if (property in node) {
+            let index = node[property].indexOf(value)
+            if (index >= 0) node[property].splice(index, 1)
+        }
+    }
+
+    _updatePropertyOnNode(node, property, values) {
+        if (node == null) continue
+
+        if (values != null) {
+            node[property] = [...values]
+        } else {
+            delete node[property]
+        }
+    }
+
     flush(steps) {
         let operations = this.operations.splice(0, steps)
 
         for (let {type, payload} of operations) {
             if (type === 'appendNode') {
-                this.base.node[payload.id] = payload.data
+                this.base.node[payload.id] = payload.node
                 this.base.parent[payload.id] = payload.parent
 
                 if (payload.parent in this.base.children) {
@@ -99,32 +146,13 @@ module.exports = class GameTree extends EventEmitter {
                 }
             } else if (type === 'addToProperty') {
                 let node = this.base.node[payload.id]
-                if (node == null) continue
-
-                if (payload.property in node) {
-                    if (!node[payload.property].includes(payload.value)) {
-                        node[payload.property].push(payload.value)
-                    }
-                } else {
-                    node[payload.property] = [payload.value]
-                }
+                this._addToPropertyOnNode(node, payload.property, payload.value)
             } else if (type === 'removeFromProperty') {
                 let node = this.base.node[payload.id]
-                if (node == null) continue
-
-                if (payload.property in node) {
-                    let index = node[payload.property].indexOf(payload.value)
-                    if (index >= 0) node[payload.property].splice(index, 1)
-                }
+                this._removeFromPropertyOnNode(node, payload.property, payload.value)
             } else if (type === 'updateProperty') {
                 let node = this.base.node[payload.id]
-                if (node == null) continue
-
-                if (payload.values != null) {
-                    node[payload.property] = [...values]
-                } else {
-                    delete node[payload.property]
-                }
+                this._updatePropertyOnNode(node, payload.property, payload.values)
             }
         }
     }
@@ -136,28 +164,15 @@ module.exports = class GameTree extends EventEmitter {
             if (payload.id !== id) continue
 
             if (type === 'appendNode') {
-                base = deepCopy(payload.data)
+                base = deepCopy(payload.node)
             } else if (type === 'removeNode') {
                 return null
             } else if (type === 'addToProperty' && base != null) {
-                if (payload.property in base) {
-                    if (!base[payload.property].includes(payload.value)) {
-                        base[payload.property].push(payload.value)
-                    }
-                } else {
-                    base[payload.property] = [payload.value]
-                }
+                this._addToPropertyOnNode(base, payload.property, payload.value)
             } else if (type === 'removeFromProperty' && base != null) {
-                if (payload.property in base) {
-                    let index = base[payload.property].indexOf(payload.value)
-                    if (index >= 0) base[payload.property].splice(index, 1)
-                }
+                this._removeFromPropertyOnNode(base, payload.property, payload.value)
             } else if (type === 'updateProperty' && base != null) {
-                if (payload.values != null) {
-                    base[payload.property] = [...payload.values]
-                } else {
-                    delete base[payload.property]
-                }
+                this._removeFromPropertyOnNode(base, payload.property, payload.values)
             }
         }
 
