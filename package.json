@@ -1,0 +1,27 @@
+{
+  "name": "@sabaki/crdt-gametree",
+  "version": "0.1.0",
+  "description": "A conflict-free replicated game tree data type.",
+  "main": "./src/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SabakiHQ/crdt-gametree.git"
+  },
+  "keywords": [
+    "gametree",
+    "tree",
+    "datatype",
+    "crdt",
+    "game",
+    "boardgame"
+  ],
+  "author": "Yichuan Shen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/SabakiHQ/crdt-gametree/issues"
+  },
+  "homepage": "https://github.com/SabakiHQ/crdt-gametree"
+}
