@@ -1,7 +1,7 @@
 const EventEmitter = require('events')
 const {uuid, sha1, compareOperations, deepClone} = require('./helper')
 
-module.exports = class GameTree extends EventEmitter {
+class GameTree extends EventEmitter {
     constructor({id = null, base = {}} = {}) {
         this.id = id == null ? uuid() : id
         this.timestamp = 0
@@ -95,7 +95,7 @@ module.exports = class GameTree extends EventEmitter {
     _addToPropertyOnNode(node, property, value) {
         if (node == null) continue
 
-        if (property in node) {
+        if (node[property] != null) {
             if (!node[property].includes(value)) {
                 node[property].push(value)
             }
@@ -107,7 +107,7 @@ module.exports = class GameTree extends EventEmitter {
     _removeFromPropertyOnNode(node, property, value) {
         if (node == null) continue
 
-        if (property in node) {
+        if (node[property] != null) {
             let index = node[property].indexOf(value)
             if (index >= 0) node[property].splice(index, 1)
         }
@@ -131,7 +131,7 @@ module.exports = class GameTree extends EventEmitter {
                 this.base.node[payload.id] = payload.node
                 this.base.parent[payload.id] = payload.parent
 
-                if (payload.parent in this.base.children) {
+                if (this.base.children[payload.parent] != null) {
                     this.base.children[payload.parent].push(payload.id)
                 } else {
                     this.base.children[payload.parent] = [payload.id]
@@ -141,7 +141,7 @@ module.exports = class GameTree extends EventEmitter {
                 delete this.base.children[payload.id]
 
                 let parent = this.base.parent[payload.id]
-                if (parent != null && parent in this.base.children) {
+                if (parent != null && this.base.children[parent] != null) {
                     this.base.children[parent].splice(this.base.children[parent].indexOf(payload.id), 1)
                 }
             } else if (type === 'addToProperty') {
@@ -226,3 +226,5 @@ module.exports = class GameTree extends EventEmitter {
         return {nodes, children}
     }
 }
+
+module.exports = GameTree
