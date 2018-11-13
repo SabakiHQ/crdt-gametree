@@ -1,5 +1,5 @@
 const EventEmitter = require('events')
-const {uuid, sha1, compareOperations} = require('./helper')
+const {uuid, sha1, compareOperations, deepClone} = require('./helper')
 
 module.exports = class GameTree extends EventEmitter {
     constructor({id = null, base = {}} = {}) {
@@ -33,7 +33,7 @@ module.exports = class GameTree extends EventEmitter {
         this.operations.splice(i + 1, 0, operation)
     }
 
-    pushOperation(type, payload) {
+    _pushOperation(type, payload) {
         this.timestamp++
 
         let operation = {
@@ -49,7 +49,7 @@ module.exports = class GameTree extends EventEmitter {
     }
 
     appendNode(parent, data) {
-        this.pushOperation('appendNode', {
+        this._pushOperation('appendNode', {
             parent,
             id: sha1(parent, this.id, this.timestamp),
             data
@@ -57,22 +57,22 @@ module.exports = class GameTree extends EventEmitter {
     }
 
     removeNode(id) {
-        this.pushOperation('removeNode', {id})
+        this._pushOperation('removeNode', {id})
     }
 
     addToAttribute(id, attribute, value) {
-        this.pushOperation('addToAttribute', {id, attribute, value})
+        this._pushOperation('addToAttribute', {id, attribute, value})
     }
 
     removeFromAttribute(id, attribute, value) {
-        this.pushOperation('removeFromAttribute', {id, attribute, value})
+        this._pushOperation('removeFromAttribute', {id, attribute, value})
     }
 
     updateAttribute(id, attribute, value) {
-        this.pushOperation('updateAttribute', {id, attribute, value})
+        this._pushOperation('updateAttribute', {id, attribute, value})
     }
 
     removeAttribute(id, attribute) {
-        this.pushOperation('updateAttribute', {id, attribute, value: null})
+        this._pushOperation('updateAttribute', {id, attribute, value: null})
     }
 }
