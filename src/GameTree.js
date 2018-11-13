@@ -207,7 +207,7 @@ class GameTree extends EventEmitter {
                 if (payload.id === id) {
                     return []
                 } else {
-                    let index = base.indexOf(id)
+                    let index = base.indexOf(payload.id)
                     if (index >= 0) base.splice(index, 1)
                 }
             }
