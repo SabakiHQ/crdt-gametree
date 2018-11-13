@@ -59,4 +59,20 @@ module.exports = class GameTree extends EventEmitter {
     removeNode(id) {
         this.pushOperation('removeNode', {id})
     }
+
+    addToAttribute(id, attribute, value) {
+        this.pushOperation('addToAttribute', {id, attribute, value})
+    }
+
+    removeFromAttribute(id, attribute, value) {
+        this.pushOperation('removeFromAttribute', {id, attribute, value})
+    }
+
+    updateAttribute(id, attribute, value) {
+        this.pushOperation('updateAttribute', {id, attribute, value})
+    }
+
+    removeAttribute(id, attribute) {
+        this.pushOperation('updateAttribute', {id, attribute, value: null})
+    }
 }
