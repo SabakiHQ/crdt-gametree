@@ -76,6 +76,59 @@ module.exports = class GameTree extends EventEmitter {
         this._pushOperation('updateProperty', {id, property, values})
     }
 
+    flush(steps) {
+        let operations = this.operations.splice(0, steps)
+
+        for (let {type, payload} of operations) {
+            if (type === 'appendNode') {
+                this.base.node[payload.id] = payload.data
+                this.base.parent[payload.id] = payload.parent
+
+                if (payload.parent in this.base.children) {
+                    this.base.children[payload.parent].push(payload.id)
+                } else {
+                    this.base.children[payload.parent] = [payload.id]
+                }
+            } else if (type === 'removeNode') {
+                delete this.base.node[payload.id]
+                delete this.base.children[payload.id]
+
+                let parent = this.base.parent[payload.id]
+                if (parent != null && parent in this.base.children) {
+                    this.base.children[parent].splice(this.base.children[parent].indexOf(payload.id), 1)
+                }
+            } else if (type === 'addToProperty') {
+                let node = this.base.node[payload.id]
+                if (node == null) continue
+
+                if (payload.property in node) {
+                    if (!node[payload.property].includes(payload.value)) {
+                        node[payload.property].push(payload.value)
+                    }
+                } else {
+                    node[payload.property] = [payload.value]
+                }
+            } else if (type === 'removeFromProperty') {
+                let node = this.base.node[payload.id]
+                if (node == null) continue
+
+                if (payload.property in node) {
+                    let index = node[payload.property].indexOf(payload.value)
+                    if (index >= 0) node[payload.property].splice(index, 1)
+                }
+            } else if (type === 'updateProperty') {
+                let node = this.base.node[payload.id]
+                if (node == null) continue
+
+                if (payload.values != null) {
+                    node[payload.property] = [...values]
+                } else {
+                    delete node[payload.property]
+                }
+            }
+        }
+    }
+
     getNode(id) {
         let base = deepCopy(this.base.node[id])
 
