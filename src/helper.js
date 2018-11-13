@@ -10,8 +10,8 @@ exports.compareOperations = (o1, o2) =>
     || compare(o1.id, o2.id)
     || compare(o1.author, o2.author)
 
-exports.deepClone = x =>
+exports.deepCopy = x =>
     x == null ? x
     : typeof x !== 'object' ? x
-    : Array.isArray(x) ? x.map(y => exports.deepClone(y))
-    : Object.keys(x).reduce((acc, k) => (acc[k] = exports.deepClone(x[k]), acc), {})
+    : Array.isArray(x) ? x.map(y => exports.deepCopy(y))
+    : Object.keys(x).reduce((acc, k) => (acc[k] = exports.deepCopy(x[k]), acc), {})

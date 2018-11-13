@@ -1,15 +1,17 @@
 const EventEmitter = require('events')
-const {uuid, sha1, compareOperations, deepClone} = require('./helper')
+const {uuid, sha1, compareOperations, deepCopy} = require('./helper')
 
 class GameTree extends EventEmitter {
     constructor({id = null, base = {}} = {}) {
+        super()
+
         this.id = id == null ? uuid() : id
         this.timestamp = 0
 
         this.root = sha1('')
         this.base = Object.assign({
             node: {
-                [root]: {}
+                [this.root]: {}
             },
             parent: {},
             children: {}
@@ -93,7 +95,7 @@ class GameTree extends EventEmitter {
     }
 
     _addToPropertyOnNode(node, property, value) {
-        if (node == null) continue
+        if (node == null) return
 
         if (node[property] != null) {
             if (!node[property].includes(value)) {
@@ -105,7 +107,7 @@ class GameTree extends EventEmitter {
     }
 
     _removeFromPropertyOnNode(node, property, value) {
-        if (node == null) continue
+        if (node == null) return
 
         if (node[property] != null) {
             let index = node[property].indexOf(value)
@@ -114,7 +116,7 @@ class GameTree extends EventEmitter {
     }
 
     _updatePropertyOnNode(node, property, values) {
-        if (node == null) continue
+        if (node == null) return
 
         if (values != null) {
             node[property] = [...values]
@@ -194,7 +196,7 @@ class GameTree extends EventEmitter {
     }
 
     getChildren(id) {
-        let base = [...this.base.children[id]] || []
+        let base = this.base.children[id] != null ? [...this.base.children[id]] : []
 
         for (let {type, payload} of this.operations) {
             if (type === 'appendNode' && payload.parent === id) {
