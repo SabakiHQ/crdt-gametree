@@ -2,11 +2,12 @@ const EventEmitter = require('events')
 const {uuid, sha1, compareOperations, deepCopy} = require('./helper')
 
 class GameTree extends EventEmitter {
-    constructor({id = null, base = {}} = {}) {
+    constructor({id = null, base = {}, autoFlush = Infinity} = {}) {
         super()
 
         this.id = id == null ? uuid() : id
         this.timestamp = 0
+        this.autoFlush = autoFlush
 
         this.root = sha1('')
         this.base = Object.assign({
@@ -25,6 +26,7 @@ class GameTree extends EventEmitter {
     applyOperation(operation) {
         let {id, timestamp} = operation
 
+        if (timestamp <= this.timestamp - this.autoFlush) throw new Error('Operation too old.')
         if (this.operations.some(o => o.id === id)) return
         if (timestamp > this.timestamp) this.timestamp = timestamp
 
@@ -39,6 +41,7 @@ class GameTree extends EventEmitter {
         }
 
         this.operations.splice(i + 1, 0, operation)
+        this._flushOldOperations()
     }
 
     // Local operations
@@ -55,6 +58,7 @@ class GameTree extends EventEmitter {
         }
 
         this.operations.push(operation)
+        this._flushOldOperations()
         this.emit('operation', operation)
 
         return operation
@@ -194,9 +198,17 @@ class GameTree extends EventEmitter {
 
     flush(steps = null) {
         if (steps == null) steps = this.operations.length
+        if (steps <= 0) return
 
         let operations = this.operations.splice(0, steps)
         this.flushOperations(this.base, operations)
+    }
+
+    _flushOldOperations() {
+        let steps = this.operations.findIndex(o => o.timestamp > this.timestamp - this.autoFlush)
+        if (steps < 0) steps = this.operations.length
+
+        this.flush(steps)
     }
 
     // Get methods
