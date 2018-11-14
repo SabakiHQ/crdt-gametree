@@ -164,7 +164,7 @@ class GameTree extends EventEmitter {
                 let children = base.children[parent]
                 if (children == null) continue
 
-                children[parent].splice(children[parent].indexOf(payload.id), 1)
+                children.splice(children.indexOf(payload.id), 1)
             } else if (type === 'shiftNode') {
                 let parent = base.parent[payload.id]
                 if (parent == null) continue
@@ -218,53 +218,27 @@ class GameTree extends EventEmitter {
     }
 
     getNode(id) {
-        let node = deepCopy(this.base.node[id])
-        let parent = this.base.parent[id] || null
-        let children = this.base.children[id] != null ? [...this.base.children[id]] : []
-
-        for (let {id: opId, type, payload} of this.operations) {
-            if (type === 'appendNode' && opId === id) {
-                node = deepCopy(payload.node)
-                parent = payload.parent
-            } else if (type === 'removeNode' && payload.id === id) {
-                node = null
-            } else if (type === 'addToProperty' && node != null && payload.id === id) {
-                this._addToPropertyOnNode(node, payload.property, payload.value)
-            } else if (type === 'removeFromProperty' && node != null && payload.id === id) {
-                this._removeFromPropertyOnNode(node, payload.property, payload.value)
-            } else if (type === 'updateProperty' && node != null && payload.id === id) {
-                this._removeFromPropertyOnNode(node, payload.property, payload.values)
-            }
-
-            if (type === 'removeNode' && (payload.id === id || payload.parent === id)) {
-                parent = null
-            }
-
-            if (type === 'appendNode' && payload.parent === id) {
-                children.push(opId)
-            } else if (type === 'removeNode' && payload.id === id) {
-                children = []
-            } else if (type === 'removeNode') {
-                let index = children.indexOf(payload.id)
-                if (index >= 0) children.splice(index, 1)
-            } else if (type === 'shiftNode') {
-                let index = children.indexOf(payload.id)
-                if (index < 0) continue
-
-                let newIndex = payload.direction === 'left' ? index - 1
-                    : payload.direction === 'right' ? index + 1
-                    : 0
-
-                children.splice(index, 1)
-                children.splice(newIndex, 0, payload.id)
-            }
+        let base = {
+            node: {[id]: deepCopy(this.base.node[id])},
+            parent: {[id]: this.base.parent[id] || null},
+            children: {[id]: this.base.children[id] != null ? [...this.base.children[id]] : []}
         }
 
-        return {parent, node, children}
+        this.flushOperations(base, this.operations)
+
+        if (base.node[id] == null) return null
+
+        return {
+            node: base.node[id],
+            parent: base.parent[id],
+            children: base.children[id]
+        }
     }
 
     getSequence(id) {
-        let {parent, node, children} = this.getNode(id)
+        let {node, parent, children} = this.getNode(id) || {}
+        if (node == null) return null
+
         let nodes = [node]
         let ids = [id]
 
