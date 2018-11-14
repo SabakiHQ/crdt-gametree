@@ -11,8 +11,8 @@ class GameTree extends EventEmitter {
 
         this.root = sha1('')
         this.base = Object.assign({
-            node: {[this.root]: {}},
-            parent: {},
+            nodes: {[this.root]: {}},
+            parents: {},
             children: {}
         }, base)
 
@@ -110,11 +110,12 @@ class GameTree extends EventEmitter {
 
     // Operation management
 
-    flushOperations(base, operations) {
-        for (let {id, type, payload} of operations) {
+    flushOperation(base, operation) {
+        let {id, type, payload} = operation
+
             if (type === 'appendNode') {
-                base.node[id] = deepCopy(payload.node)
-                base.parent[id] = payload.parent
+            base.nodes[id] = deepCopy(payload.node)
+            base.parents[id] = payload.parent
 
                 if (base.children[payload.parent] != null) {
                     base.children[payload.parent].push(id)
@@ -122,10 +123,10 @@ class GameTree extends EventEmitter {
                     base.children[payload.parent] = [id]
                 }
             } else if (type === 'removeNode') {
-                delete base.node[payload.id]
+            delete base.nodes[payload.id]
                 delete base.children[payload.id]
 
-                let parent = base.parent[payload.id]
+            let parent = base.parents[payload.id]
                 if (parent == null) continue
 
                 let children = base.children[parent]
@@ -133,7 +134,7 @@ class GameTree extends EventEmitter {
 
                 children.splice(children.indexOf(payload.id), 1)
             } else if (type === 'shiftNode') {
-                let parent = base.parent[payload.id]
+            let parent = base.parents[payload.id]
                 if (parent == null) continue
 
                 let children = base.children[parent]
@@ -149,7 +150,7 @@ class GameTree extends EventEmitter {
                 children.splice(index, 1)
                 children.splice(newIndex, 0, payload.id)
             } else if (type === 'addToProperty') {
-                let node = base.node[payload.id]
+            let node = base.nodes[payload.id]
                 let {property, value} = payload
                 if (node == null) return
 
@@ -161,7 +162,7 @@ class GameTree extends EventEmitter {
                     node[property] = [value]
                 }
             } else if (type === 'removeFromProperty') {
-                let node = base.node[payload.id]
+            let node = base.nodes[payload.id]
                 let {property, value} = payload
                 if (node == null) return
 
@@ -170,7 +171,7 @@ class GameTree extends EventEmitter {
                     if (index >= 0) node[property].splice(index, 1)
                 }
             } else if (type === 'updateProperty') {
-                let node = base.node[payload.id]
+            let node = base.nodes[payload.id]
                 let {property, values} = payload
                 if (node == null) return
 
@@ -180,7 +181,6 @@ class GameTree extends EventEmitter {
                     delete node[property]
                 }
             }
-        }
 
         return base
     }
@@ -190,7 +190,10 @@ class GameTree extends EventEmitter {
         if (steps <= 0) return
 
         let operations = this.operations.splice(0, steps)
-        this.flushOperations(this.base, operations)
+
+        for (let operation of operations) {
+            this.flushOperation(this.base, operation)
+    }
     }
 
     _flushOldOperations() {
@@ -203,21 +206,29 @@ class GameTree extends EventEmitter {
     // Get methods
 
     toObject() {
-        return this.flushOperations(deepCopy(this.base), this.operations)
+        let base = deepCopy(this.base)
+
+        for (let operation of this.operations) {
+            this.flushOperation(base, operation)
+        }
+
+        return base
     }
 
     getNode(id) {
         let base = {
-            node: {[id]: deepCopy(this.base.node[id])},
-            parent: {[id]: this.base.parent[id] || null},
+            nodes: {[id]: deepCopy(this.base.nodes[id])},
+            parents: {[id]: this.base.parents[id] || null},
             children: {[id]: this.base.children[id] != null ? [...this.base.children[id]] : []}
         }
 
-        this.flushOperations(base, this.operations)
+        for (let operation of this.operations) {
+            this.flushOperation(base, operation)
+        }
 
         return {
-            node: base.node[id],
-            parent: base.parent[id],
+            node: base.nodes[id],
+            parent: base.parents[id],
             children: base.children[id]
         }
     }
