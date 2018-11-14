@@ -245,14 +245,18 @@ class GameTree extends EventEmitter {
     getSequence(id) {
         let {parent, node, children} = this.getNode(id)
         let nodes = [node]
+        let ids = [id]
 
         while (children.length === 1) {
             let child = this.getNode(children[0])
+
+            ids.push(children[0])
             nodes.push(child.node)
+
             children = child.children
         }
 
-        return {parent, nodes, children}
+        return {parent, ids, nodes, children}
     }
 }
 
