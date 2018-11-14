@@ -108,39 +108,6 @@ class GameTree extends EventEmitter {
         this.updateProperty(id, property, null)
     }
 
-    // Internal operations
-
-    _addToPropertyOnNode(node, property, value) {
-        if (node == null) return
-
-        if (node[property] != null) {
-            if (!node[property].includes(value)) {
-                node[property].push(value)
-            }
-        } else {
-            node[property] = [value]
-        }
-    }
-
-    _removeFromPropertyOnNode(node, property, value) {
-        if (node == null) return
-
-        if (node[property] != null) {
-            let index = node[property].indexOf(value)
-            if (index >= 0) node[property].splice(index, 1)
-        }
-    }
-
-    _updatePropertyOnNode(node, property, values) {
-        if (node == null) return
-
-        if (values != null) {
-            node[property] = [...values]
-        } else {
-            delete node[property]
-        }
-    }
-
     // Operation management
 
     flushOperations(base, operations) {
@@ -183,13 +150,35 @@ class GameTree extends EventEmitter {
                 children.splice(newIndex, 0, payload.id)
             } else if (type === 'addToProperty') {
                 let node = base.node[payload.id]
-                this._addToPropertyOnNode(node, payload.property, payload.value)
+                let {property, value} = payload
+                if (node == null) return
+
+                if (node[property] != null) {
+                    if (!node[property].includes(value)) {
+                        node[property].push(value)
+                    }
+                } else {
+                    node[property] = [value]
+                }
             } else if (type === 'removeFromProperty') {
                 let node = base.node[payload.id]
-                this._removeFromPropertyOnNode(node, payload.property, payload.value)
+                let {property, value} = payload
+                if (node == null) return
+
+                if (node[property] != null) {
+                    let index = node[property].indexOf(value)
+                    if (index >= 0) node[property].splice(index, 1)
+                }
             } else if (type === 'updateProperty') {
                 let node = base.node[payload.id]
-                this._updatePropertyOnNode(node, payload.property, payload.values)
+                let {property, values} = payload
+                if (node == null) return
+
+                if (values != null) {
+                    node[property] = [...values]
+                } else {
+                    delete node[property]
+                }
             }
         }
 
