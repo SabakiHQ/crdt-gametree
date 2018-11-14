@@ -11,9 +11,7 @@ class GameTree extends EventEmitter {
 
         this.root = sha1('')
         this.base = Object.assign({
-            node: {
-                [this.root]: {}
-            },
+            node: {[this.root]: {}},
             parent: {},
             children: {}
         }, base)
@@ -26,7 +24,7 @@ class GameTree extends EventEmitter {
     applyOperation(operation) {
         let {id, timestamp} = operation
 
-        if (timestamp <= this.timestamp - this.autoFlush) throw new Error('Operation too old.')
+        if (timestamp <= this.timestamp - this.autoFlush) throw new Error('Operation too old')
         if (this.operations.some(o => o.id === id)) return
         if (timestamp > this.timestamp) this.timestamp = timestamp
 
@@ -83,11 +81,13 @@ class GameTree extends EventEmitter {
     }
 
     removeNode(id) {
+        if (id === this.root) throw new Error('Cannot remove root node')
+
         this._pushOperation('removeNode', {id})
     }
 
     shiftNode(id, direction) {
-        if (!['left', 'right', 'main'].includes(direction)) return
+        if (!['left', 'right', 'main'].includes(direction)) throw new Error('Invalid value for direction')
 
         this._pushOperation('shiftNode', {id, direction})
     }
@@ -137,7 +137,7 @@ class GameTree extends EventEmitter {
                 if (parent == null) continue
 
                 let children = base.children[parent]
-                if (children == null) continue
+                if (children == null || children.length <= 1) continue
 
                 let index = children.indexOf(payload.id)
                 if (index < 0) continue
