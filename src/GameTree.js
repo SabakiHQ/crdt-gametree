@@ -20,6 +20,8 @@ class GameTree extends EventEmitter {
         this.operations = []
     }
 
+    // External operations
+
     applyOperation(operation) {
         let {id, timestamp} = operation
 
@@ -39,6 +41,8 @@ class GameTree extends EventEmitter {
         this.operations.splice(i + 1, 0, operation)
     }
 
+    // Local operations
+
     _pushOperation(type, payload) {
         this.timestamp++
 
@@ -52,14 +56,14 @@ class GameTree extends EventEmitter {
 
         this.operations.push(operation)
         this.emit('operation', operation)
+
+        return operation
     }
 
     appendNode(parent, node) {
-        let id = sha1(parent, this.id, this.timestamp)
+        let operation = this._pushOperation('appendNode', {parent, node})
 
-        this._pushOperation('appendNode', {parent, id, node})
-
-        return id
+        return operation.id
     }
 
     appendNodes(parent, data) {
@@ -100,6 +104,8 @@ class GameTree extends EventEmitter {
         this.updateProperty(id, property, null)
     }
 
+    // Internal operations
+
     _addToPropertyOnNode(node, property, value) {
         if (node == null) return
 
@@ -131,20 +137,22 @@ class GameTree extends EventEmitter {
         }
     }
 
+    // Operation management
+
     flush(steps = null) {
         if (steps == null) steps = this.operations.length
 
         let operations = this.operations.splice(0, steps)
 
-        for (let {type, payload} of operations) {
+        for (let {id, type, payload} of operations) {
             if (type === 'appendNode') {
-                this.base.node[payload.id] = payload.node
-                this.base.parent[payload.id] = payload.parent
+                this.base.node[id] = payload.node
+                this.base.parent[id] = payload.parent
 
                 if (this.base.children[payload.parent] != null) {
-                    this.base.children[payload.parent].push(payload.id)
+                    this.base.children[payload.parent].push(id)
                 } else {
-                    this.base.children[payload.parent] = [payload.id]
+                    this.base.children[payload.parent] = [id]
                 }
             } else if (type === 'removeNode') {
                 delete this.base.node[payload.id]
@@ -186,25 +194,25 @@ class GameTree extends EventEmitter {
         }
     }
 
+    // Get methods
+
     getNode(id) {
         let node = deepCopy(this.base.node[id])
         let parent = this.base.parent[id] || null
         let children = this.base.children[id] != null ? [...this.base.children[id]] : []
 
-        for (let {type, payload} of this.operations) {
-            if (payload.id === id) {
-                if (type === 'appendNode') {
-                    node = deepCopy(payload.node)
-                    parent = payload.parent
-                } else if (type === 'removeNode') {
-                    node = null
-                } else if (type === 'addToProperty' && node != null) {
-                    this._addToPropertyOnNode(node, payload.property, payload.value)
-                } else if (type === 'removeFromProperty' && node != null) {
-                    this._removeFromPropertyOnNode(node, payload.property, payload.value)
-                } else if (type === 'updateProperty' && node != null) {
-                    this._removeFromPropertyOnNode(node, payload.property, payload.values)
-                }
+        for (let {id: opId, type, payload} of this.operations) {
+            if (type === 'appendNode' && opId === id) {
+                node = deepCopy(payload.node)
+                parent = payload.parent
+            } else if (type === 'removeNode' && payload.id === id) {
+                node = null
+            } else if (type === 'addToProperty' && node != null && payload.id === id) {
+                this._addToPropertyOnNode(node, payload.property, payload.value)
+            } else if (type === 'removeFromProperty' && node != null && payload.id === id) {
+                this._removeFromPropertyOnNode(node, payload.property, payload.value)
+            } else if (type === 'updateProperty' && node != null && payload.id === id) {
+                this._removeFromPropertyOnNode(node, payload.property, payload.values)
             }
 
             if (type === 'removeNode' && (payload.id === id || payload.parent === id)) {
@@ -212,7 +220,7 @@ class GameTree extends EventEmitter {
             }
 
             if (type === 'appendNode' && payload.parent === id) {
-                children.push(payload.id)
+                children.push(opId)
             } else if (type === 'removeNode' && payload.id === id) {
                 children = []
             } else if (type === 'removeNode') {
