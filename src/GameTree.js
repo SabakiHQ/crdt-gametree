@@ -71,7 +71,7 @@ class GameTree extends EventEmitter {
             ids.push(id)
         }
 
-        return
+        return ids
     }
 
     removeNode(id) {
