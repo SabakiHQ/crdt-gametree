@@ -78,6 +78,12 @@ class GameTree extends EventEmitter {
         this._pushOperation('removeNode', {id})
     }
 
+    shiftNode(id, direction) {
+        if (!['left', 'right', 'main'].includes(direction)) return
+
+        this._pushOperation('shiftNode', {id, direction})
+    }
+
     addToProperty(id, property, value) {
         this._pushOperation('addToProperty', {id, property, value})
     }
@@ -91,7 +97,7 @@ class GameTree extends EventEmitter {
     }
 
     removeProperty(id, property) {
-        this._pushOperation('updateProperty', {id, property, values: null})
+        this.updateProperty(id, property, null)
     }
 
     _addToPropertyOnNode(node, property, value) {
@@ -145,9 +151,28 @@ class GameTree extends EventEmitter {
                 delete this.base.children[payload.id]
 
                 let parent = this.base.parent[payload.id]
-                if (parent != null && this.base.children[parent] != null) {
-                    this.base.children[parent].splice(this.base.children[parent].indexOf(payload.id), 1)
-                }
+                if (parent == null) continue
+
+                let children = this.base.children[parent]
+                if (children == null) continue
+
+                children[parent].splice(children[parent].indexOf(payload.id), 1)
+            } else if (type === 'shiftNode') {
+                let parent = this.base.parent[payload.id]
+                if (parent == null) continue
+
+                let children = this.base.children[parent]
+                if (children == null) continue
+
+                let index = children.indexOf(payload.id)
+                if (index < 0) continue
+
+                let newIndex = payload.direction === 'left' ? index - 1
+                    : payload.direction === 'right' ? index + 1
+                    : 0
+
+                children.splice(index, 1)
+                children.splice(newIndex, 0, payload.id)
             } else if (type === 'addToProperty') {
                 let node = this.base.node[payload.id]
                 this._addToPropertyOnNode(node, payload.property, payload.value)
@@ -210,6 +235,16 @@ class GameTree extends EventEmitter {
                     let index = base.indexOf(payload.id)
                     if (index >= 0) base.splice(index, 1)
                 }
+            } else if (type === 'shiftNode') {
+                let index = base.indexOf(payload.id)
+                if (index < 0) continue
+
+                let newIndex = payload.direction === 'left' ? index - 1
+                    : payload.direction === 'right' ? index + 1
+                    : 0
+
+                base.splice(index, 1)
+                base.splice(newIndex, 0, payload.id)
             }
         }
 
