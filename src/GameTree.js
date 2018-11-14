@@ -113,7 +113,7 @@ class GameTree extends EventEmitter {
     flushOperations(base, operations) {
         for (let {id, type, payload} of operations) {
             if (type === 'appendNode') {
-                base.node[id] = payload.node
+                base.node[id] = deepCopy(payload.node)
                 base.parent[id] = payload.parent
 
                 if (base.children[payload.parent] != null) {
