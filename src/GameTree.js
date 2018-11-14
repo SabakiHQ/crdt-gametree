@@ -113,74 +113,74 @@ class GameTree extends EventEmitter {
     flushOperation(base, operation) {
         let {id, type, payload} = operation
 
-            if (type === 'appendNode') {
+        if (type === 'appendNode') {
             base.nodes[id] = deepCopy(payload.node)
             base.parents[id] = payload.parent
 
-                if (base.children[payload.parent] != null) {
-                    base.children[payload.parent].push(id)
-                } else {
-                    base.children[payload.parent] = [id]
-                }
-            } else if (type === 'removeNode') {
-            delete base.nodes[payload.id]
-                delete base.children[payload.id]
-
-            let parent = base.parents[payload.id]
-                if (parent == null) continue
-
-                let children = base.children[parent]
-                if (children == null) continue
-
-                children.splice(children.indexOf(payload.id), 1)
-            } else if (type === 'shiftNode') {
-            let parent = base.parents[payload.id]
-                if (parent == null) continue
-
-                let children = base.children[parent]
-                if (children == null || children.length <= 1) continue
-
-                let index = children.indexOf(payload.id)
-                if (index < 0) continue
-
-                let newIndex = payload.direction === 'left' ? index - 1
-                    : payload.direction === 'right' ? index + 1
-                    : 0
-
-                children.splice(index, 1)
-                children.splice(newIndex, 0, payload.id)
-            } else if (type === 'addToProperty') {
-            let node = base.nodes[payload.id]
-                let {property, value} = payload
-                if (node == null) return
-
-                if (node[property] != null) {
-                    if (!node[property].includes(value)) {
-                        node[property].push(value)
-                    }
-                } else {
-                    node[property] = [value]
-                }
-            } else if (type === 'removeFromProperty') {
-            let node = base.nodes[payload.id]
-                let {property, value} = payload
-                if (node == null) return
-
-                if (node[property] != null) {
-                    let index = node[property].indexOf(value)
-                    if (index >= 0) node[property].splice(index, 1)
-                }
-            } else if (type === 'updateProperty') {
-            let node = base.nodes[payload.id]
-                let {property, values} = payload
-                if (node == null) return
-
-                if (values != null) {
-                    node[property] = [...values]
-                } else {
-                    delete node[property]
-                }
+            if (base.children[payload.parent] != null) {
+                base.children[payload.parent].push(id)
+            } else {
+                base.children[payload.parent] = [id]
             }
+        } else if (type === 'removeNode') {
+            delete base.nodes[payload.id]
+            delete base.children[payload.id]
+
+            let parent = base.parents[payload.id]
+            if (parent == null) return
+
+            let children = base.children[parent]
+            if (children == null) return
+
+            children.splice(children.indexOf(payload.id), 1)
+        } else if (type === 'shiftNode') {
+            let parent = base.parents[payload.id]
+            if (parent == null) return
+
+            let children = base.children[parent]
+            if (children == null || children.length <= 1) return
+
+            let index = children.indexOf(payload.id)
+            if (index < 0) return
+
+            let newIndex = payload.direction === 'left' ? index - 1
+                : payload.direction === 'right' ? index + 1
+                : 0
+
+            children.splice(index, 1)
+            children.splice(newIndex, 0, payload.id)
+        } else if (type === 'addToProperty') {
+            let node = base.nodes[payload.id]
+            let {property, value} = payload
+            if (node == null) return
+
+            if (node[property] != null) {
+                if (!node[property].includes(value)) {
+                    node[property].push(value)
+                }
+            } else {
+                node[property] = [value]
+            }
+        } else if (type === 'removeFromProperty') {
+            let node = base.nodes[payload.id]
+            let {property, value} = payload
+            if (node == null) return
+
+            if (node[property] != null) {
+                let index = node[property].indexOf(value)
+                if (index >= 0) node[property].splice(index, 1)
+            }
+        } else if (type === 'updateProperty') {
+            let node = base.nodes[payload.id]
+            let {property, values} = payload
+            if (node == null) return
+
+            if (values != null) {
+                node[property] = [...values]
+            } else {
+                delete node[property]
+            }
+        }
 
         return base
     }
@@ -193,7 +193,7 @@ class GameTree extends EventEmitter {
 
         for (let operation of operations) {
             this.flushOperation(this.base, operation)
-    }
+        }
     }
 
     _flushOldOperations() {
@@ -250,6 +250,23 @@ class GameTree extends EventEmitter {
         }
 
         return {parent, ids, nodes, children}
+    }
+
+    getTreeStructure() {
+        let base = {
+            nodes: {},
+            parents: Object.assign({}, this.base.parents),
+            children: deepCopy(this.base.children)
+        }
+
+        for (let operation of this.operations) {
+            if (!['appendNode', 'removeNode', 'shiftNode'].includes(operation.type)) continue
+
+            this.flushOperation(base, operation)
+        }
+
+        delete base.nodes
+        return base
     }
 }
 
