@@ -139,37 +139,33 @@ class GameTree extends EventEmitter {
 
     // Operation management
 
-    flush(steps = null) {
-        if (steps == null) steps = this.operations.length
-
-        let operations = this.operations.splice(0, steps)
-
+    flushOperations(base, operations) {
         for (let {id, type, payload} of operations) {
             if (type === 'appendNode') {
-                this.base.node[id] = payload.node
-                this.base.parent[id] = payload.parent
+                base.node[id] = payload.node
+                base.parent[id] = payload.parent
 
-                if (this.base.children[payload.parent] != null) {
-                    this.base.children[payload.parent].push(id)
+                if (base.children[payload.parent] != null) {
+                    base.children[payload.parent].push(id)
                 } else {
-                    this.base.children[payload.parent] = [id]
+                    base.children[payload.parent] = [id]
                 }
             } else if (type === 'removeNode') {
-                delete this.base.node[payload.id]
-                delete this.base.children[payload.id]
+                delete base.node[payload.id]
+                delete base.children[payload.id]
 
-                let parent = this.base.parent[payload.id]
+                let parent = base.parent[payload.id]
                 if (parent == null) continue
 
-                let children = this.base.children[parent]
+                let children = base.children[parent]
                 if (children == null) continue
 
                 children[parent].splice(children[parent].indexOf(payload.id), 1)
             } else if (type === 'shiftNode') {
-                let parent = this.base.parent[payload.id]
+                let parent = base.parent[payload.id]
                 if (parent == null) continue
 
-                let children = this.base.children[parent]
+                let children = base.children[parent]
                 if (children == null) continue
 
                 let index = children.indexOf(payload.id)
@@ -182,19 +178,32 @@ class GameTree extends EventEmitter {
                 children.splice(index, 1)
                 children.splice(newIndex, 0, payload.id)
             } else if (type === 'addToProperty') {
-                let node = this.base.node[payload.id]
+                let node = base.node[payload.id]
                 this._addToPropertyOnNode(node, payload.property, payload.value)
             } else if (type === 'removeFromProperty') {
-                let node = this.base.node[payload.id]
+                let node = base.node[payload.id]
                 this._removeFromPropertyOnNode(node, payload.property, payload.value)
             } else if (type === 'updateProperty') {
-                let node = this.base.node[payload.id]
+                let node = base.node[payload.id]
                 this._updatePropertyOnNode(node, payload.property, payload.values)
             }
         }
+
+        return base
+    }
+
+    flush(steps = null) {
+        if (steps == null) steps = this.operations.length
+
+        let operations = this.operations.splice(0, steps)
+        this.flushOperations(this.base, operations)
     }
 
     // Get methods
+
+    toObject() {
+        return this.flushOperations(deepCopy(this.base), this.operations)
+    }
 
     getNode(id) {
         let node = deepCopy(this.base.node[id])
