@@ -187,82 +187,64 @@ class GameTree extends EventEmitter {
     }
 
     getNode(id) {
-        let base = deepCopy(this.base.node[id])
+        let node = deepCopy(this.base.node[id])
+        let parent = this.base.parent[id] || null
+        let children = this.base.children[id] != null ? [...this.base.children[id]] : []
 
         for (let {type, payload} of this.operations) {
-            if (payload.id !== id) continue
-
-            if (type === 'appendNode') {
-                base = deepCopy(payload.node)
-            } else if (type === 'removeNode') {
-                return null
-            } else if (type === 'addToProperty' && base != null) {
-                this._addToPropertyOnNode(base, payload.property, payload.value)
-            } else if (type === 'removeFromProperty' && base != null) {
-                this._removeFromPropertyOnNode(base, payload.property, payload.value)
-            } else if (type === 'updateProperty' && base != null) {
-                this._removeFromPropertyOnNode(base, payload.property, payload.values)
-            }
-        }
-
-        return base
-    }
-
-    getParent(id) {
-        let base = this.base.parent[id]
-
-        for (let {type, payload} of this.operations) {
-            if (type === 'appendNode' && payload.id === id) {
-                base = payload.parent
-            } else if (type === 'removeNode' && (payload.id === id || payload.parent === id)) {
-                return null
-            }
-        }
-
-        return base
-    }
-
-    getChildren(id) {
-        let base = this.base.children[id] != null ? [...this.base.children[id]] : []
-
-        for (let {type, payload} of this.operations) {
-            if (type === 'appendNode' && payload.parent === id) {
-                base.push(payload.id)
-            } else if (type === 'removeNode') {
-                if (payload.id === id) {
-                    return []
-                } else {
-                    let index = base.indexOf(payload.id)
-                    if (index >= 0) base.splice(index, 1)
+            if (payload.id === id) {
+                if (type === 'appendNode') {
+                    node = deepCopy(payload.node)
+                    parent = payload.parent
+                } else if (type === 'removeNode') {
+                    node = null
+                } else if (type === 'addToProperty' && node != null) {
+                    this._addToPropertyOnNode(node, payload.property, payload.value)
+                } else if (type === 'removeFromProperty' && node != null) {
+                    this._removeFromPropertyOnNode(node, payload.property, payload.value)
+                } else if (type === 'updateProperty' && node != null) {
+                    this._removeFromPropertyOnNode(node, payload.property, payload.values)
                 }
+            }
+
+            if (type === 'removeNode' && (payload.id === id || payload.parent === id)) {
+                parent = null
+            }
+
+            if (type === 'appendNode' && payload.parent === id) {
+                children.push(payload.id)
+            } else if (type === 'removeNode' && payload.id === id) {
+                children = []
+            } else if (type === 'removeNode') {
+                let index = children.indexOf(payload.id)
+                if (index >= 0) children.splice(index, 1)
             } else if (type === 'shiftNode') {
-                let index = base.indexOf(payload.id)
+                let index = children.indexOf(payload.id)
                 if (index < 0) continue
 
                 let newIndex = payload.direction === 'left' ? index - 1
                     : payload.direction === 'right' ? index + 1
                     : 0
 
-                base.splice(index, 1)
-                base.splice(newIndex, 0, payload.id)
+                children.splice(index, 1)
+                children.splice(newIndex, 0, payload.id)
             }
         }
 
-        return base
+        return {parent, node, children}
     }
 
     getSequence(id) {
-        let node = this.getNode(id)
+        let {parent, node, children} = this.getNode(id)
         let nodes = [node]
-        let children = this.getChildren(id)
 
         while (children.length === 1) {
             let child = this.getNode(children[0])
-            nodes.push(child)
-            children = this.getChildren(children[0])
+            nodes.push(child.node)
+            children = child.children
         }
 
-        return {nodes, children}
+        return {parent, nodes, children}
     }
 }
 
