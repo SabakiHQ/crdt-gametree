@@ -169,6 +169,7 @@ class GameTree extends EventEmitter {
             if (node[property] != null) {
                 let index = node[property].indexOf(value)
                 if (index >= 0) node[property].splice(index, 1)
+                if (node[property].length === 0) delete node[property]
             }
         } else if (type === 'updateProperty') {
             let node = base.nodes[payload.id]
