@@ -226,8 +226,6 @@ class GameTree extends EventEmitter {
 
         this.flushOperations(base, this.operations)
 
-        if (base.node[id] == null) return null
-
         return {
             node: base.node[id],
             parent: base.parent[id],
@@ -236,7 +234,7 @@ class GameTree extends EventEmitter {
     }
 
     getSequence(id) {
-        let {node, parent, children} = this.getNode(id) || {}
+        let {node, parent, children} = this.getNode(id)
         if (node == null) return null
 
         let nodes = [node]
