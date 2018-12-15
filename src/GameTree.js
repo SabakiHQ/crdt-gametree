@@ -38,9 +38,9 @@ class GameTree extends EventEmitter {
     }
 
     _getGameTree() {
-        for (let i = this._operations.length - 1; i >= 0; i--) {
-            let {tree} = this._operations[i]
-            if (tree != null) return tree
+        if (this._operations.length > 0) {
+            let lastOperation = this._operations.slice(-1)[0]
+            return lastOperation.tree
         }
 
         return this.base
