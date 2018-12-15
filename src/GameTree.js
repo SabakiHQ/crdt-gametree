@@ -14,6 +14,30 @@ class GameTree extends EventEmitter {
         this.root = this.base.root
 
         this.operations = []
+
+        // Inherit some methods from @sabaki/immutable-gametree
+
+        let inheritedMethods = [
+            'get', 'getSequence', 'navigate',
+            'listNodes', 'listNodesHorizontally', 'listNodesVertically',
+            'listCurrentNodes', 'listMainNodes', 'getLevel',
+            'getSection', 'getCurrentHeight', 'getHeight',
+            'onCurrentLine', 'onMainLine', 'toJSON'
+        ]
+
+        for (let method of inheritedMethods) {
+            this[method] = (...args) => {
+                this._getGameTree()[method](...args)
+            }
+        }
+    }
+
+    _getGameTree() {
+        if (this.operations.length > 0) {
+            return this.operations.slice(-1)[0].tree
+        }
+
+        return this.base
     }
 }
 
