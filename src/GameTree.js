@@ -17,8 +17,8 @@ class GameTree extends EventEmitter {
         this.base = new ImmutableGameTree({getId: this.getId, root})
         this.root = this.base.root
 
-        this.changes = []
-        this._operations = []
+        this._changes = []
+        this.history = []
 
         // Inherit some methods from @sabaki/immutable-gametree
 
@@ -46,6 +46,14 @@ class GameTree extends EventEmitter {
         return this.base
     }
 
+    getChanges() {
+        return this._changes.map(change => {
+            let result = Object.assign({}, change)
+            delete result.tree
+            return result
+        })
+    }
+
     mutate(mutator) {
         let draftShim = null
         let newTree = this._getGameTree().mutate(draft => {
@@ -54,11 +62,11 @@ class GameTree extends EventEmitter {
             return mutator(draftShim)
         })
 
-        if (draftShim == null || draftShim.operations.length === 0) {
+        if (draftShim == null || draftShim.changes.length === 0) {
             return this
         }
 
-        draftShim.operations.slice(-1)[0].tree = newTree
+        draftShim.changes.slice(-1)[0].tree = newTree
 
         let result = new GameTree({
             getId: this.getId
@@ -69,8 +77,8 @@ class GameTree extends EventEmitter {
             timestamp: draftShim.timestamp,
             base: this.base,
             root: newTree.root,
-            changes: draftShim.operations,
-            _operations: [...this._operations, ...draftShim.operations]
+            _changes: draftShim.changes,
+            history: [...this.history, ...draftShim.changes]
         })
 
         return result

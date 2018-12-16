@@ -4,7 +4,7 @@ class Draft {
         this.timestamp = base.timestamp
         this.draft = draft
         this.root = draft.root
-        this.operations = []
+        this.changes = []
 
         // Log operation methods
 
@@ -19,7 +19,7 @@ class Draft {
                 let returnValue = this.draft[method](...args)
                 let timestamp = this.timestamp++
 
-                this.operations.push({
+                this.changes.push({
                     operation: method,
                     args,
                     returnValue,
