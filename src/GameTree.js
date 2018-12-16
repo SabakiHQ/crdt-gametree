@@ -99,7 +99,7 @@ class GameTree extends EventEmitter {
                 try {
                     if (operation === 'appendNode') {
                         draft.UNSAFE_appendNodeWithId(args[0], returnValue, args[1])
-                    } else {
+                    } else if (!operation.contains('UNSAFE_') && operation in draft) {
                         draft[operation](...args)
                     }
                 } catch (err) {}

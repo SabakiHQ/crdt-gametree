@@ -1,2 +1,2 @@
 # crdt-gametree
-WIP: A conflict-free replicated game tree data type.
+WIP: An immutable, conflict-free replicated game tree data type.
