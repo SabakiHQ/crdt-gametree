@@ -31,6 +31,18 @@ class Draft {
                 return returnValue
             }
         }
+
+        // Block unsafe methods
+
+        let unsafeMethods = [
+            'UNSAFE_appendNodeWithId'
+        ]
+
+        for (let method of unsafeMethods) {
+            this[method] = () => {
+                throw new Error('Unsafe operation methods are not supported.')
+            }
+        }
     }
 
     get(id) {
