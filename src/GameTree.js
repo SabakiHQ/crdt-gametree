@@ -1,13 +1,13 @@
 const EventEmitter = require('events')
 const ImmutableGameTree = require('@sabaki/immutable-gametree')
-const {uuid, sha1, compareChange, stripChange} = require('./helper')
+const {uuid, sha1, compareChange, sanitizeChange} = require('./helper')
 const Draft = require('./Draft')
 
 class GameTree extends EventEmitter {
-    constructor({getId = null, root} = {}) {
+    constructor({id = null, getId = null, root} = {}) {
         super()
 
-        this.id = uuid()
+        this.id = id != null ? uuid() : id
         this.timestamp = 0
         this.getId = getId || (() => {
             let id = 0
@@ -47,11 +47,81 @@ class GameTree extends EventEmitter {
     }
 
     getChanges() {
-        return this._changes.map(stripChange)
+        return this._changes.map(sanitizeChange)
     }
 
     getHistory() {
-        return this._history.map(stripChange)
+        return this._history.map(sanitizeChange)
+    }
+
+    applyChanges(changes) {
+        let newHistory = [...this._history]
+        let changeIndex = newHistory.length
+
+        if (changes.length === 0) {
+            return this
+        }
+
+        // Insert changes
+
+        for (let change of changes) {
+            let i = newHistory.length
+            while (i > 0 && compareChange(newHistory[i - 1], change) >= 0) i--
+
+            changeIndex = Math.min(i, changeIndex)
+            newHistory.splice(i, 0, change)
+        }
+
+        // Remove outdated data
+
+        for (let i = changeIndex; i < newHistory.length; i++) {
+            newHistory[i] = Object.assign({}, newHistory[i], {
+                tree: null
+            })
+        }
+
+        // Get an appropriate base
+
+        let baseIndex = changeIndex - 1
+        while (baseIndex >= 0 && newHistory[baseIndex].tree == null) baseIndex--
+
+        let base = baseIndex < 0 ? this.base : newHistory[baseIndex].tree
+
+        // Generate new tree
+
+        let newTimestamp = this.timestamp
+        let newTree = base.mutate(draft => {
+            for (let i = baseIndex + 1; i < newHistory.length; i++) {
+                let {operation, args, returnValue, timestamp} = newHistory[i]
+
+                newTimestamp = Math.max(newTimestamp, timestamp + 1)
+
+                try {
+                    if (operation === 'appendNode') {
+                        draft.UNSAFE_appendNodeWithId(args[0], returnValue, args[1])
+                    } else {
+                        draft[operation](...args)
+                    }
+                } catch (err) {}
+            }
+        })
+
+        newHistory.slice(-1)[0].tree = newTree
+
+        let result = new GameTree({
+            id: this.id,
+            getId: this.getId
+        })
+
+        Object.assign(result, {
+            timestamp: newTimestamp,
+            base: this.base,
+            root: newTree.root,
+            _changes: changes,
+            _history: newHistory
+        })
+
+        return result
     }
 
     mutate(mutator) {
@@ -69,11 +139,11 @@ class GameTree extends EventEmitter {
         draftShim.changes.slice(-1)[0].tree = newTree
 
         let result = new GameTree({
+            id: this.id,
             getId: this.getId
         })
 
         Object.assign(result, {
-            id: this.id,
             timestamp: draftShim.timestamp,
             base: this.base,
             root: newTree.root,
