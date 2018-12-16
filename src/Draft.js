@@ -6,12 +6,11 @@ class Draft {
         this.root = draft.root
         this.changes = []
 
-        // Log operation methods
+        // Log changes
 
         let operationMethods = [
-            'appendNode', 'UNSAFE_appendNodeWithId', 'removeNode',
-            'shiftNode', 'makeRoot', 'addToProperty',
-            'removeFromProperty', 'updateProperty', 'removeProperty'
+            'appendNode', 'removeNode', 'shiftNode', 'makeRoot',
+            'addToProperty', 'removeFromProperty', 'updateProperty', 'removeProperty'
         ]
 
         for (let method of operationMethods) {
@@ -19,11 +18,12 @@ class Draft {
                 let returnValue = this.draft[method](...args)
                 let timestamp = this.timestamp++
 
+                this.root = draft.root
                 this.changes.push({
                     operation: method,
                     args,
                     returnValue,
-                    id: this.id,
+                    actorId: this.id,
                     timestamp,
                     tree: null
                 })

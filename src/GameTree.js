@@ -1,6 +1,6 @@
 const EventEmitter = require('events')
 const ImmutableGameTree = require('@sabaki/immutable-gametree')
-const {uuid, sha1, compareOperations} = require('./helper')
+const {uuid, sha1, compareChange, stripChange} = require('./helper')
 const Draft = require('./Draft')
 
 class GameTree extends EventEmitter {
@@ -18,7 +18,7 @@ class GameTree extends EventEmitter {
         this.root = this.base.root
 
         this._changes = []
-        this.history = []
+        this._history = []
 
         // Inherit some methods from @sabaki/immutable-gametree
 
@@ -47,17 +47,17 @@ class GameTree extends EventEmitter {
     }
 
     getChanges() {
-        return this._changes.map(change => {
-            let result = Object.assign({}, change)
-            delete result.tree
-            return result
-        })
+        return this._changes.map(stripChange)
+    }
+
+    getHistory() {
+        return this._history.map(stripChange)
     }
 
     mutate(mutator) {
         let draftShim = null
         let newTree = this._getGameTree().mutate(draft => {
-            draftShim = new Draft(this._getGameTree(), draft)
+            draftShim = new Draft(this, draft)
 
             return mutator(draftShim)
         })
@@ -78,7 +78,7 @@ class GameTree extends EventEmitter {
             base: this.base,
             root: newTree.root,
             _changes: draftShim.changes,
-            history: [...this.history, ...draftShim.changes]
+            _history: [...this._history, ...draftShim.changes]
         })
 
         return result

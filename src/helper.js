@@ -5,6 +5,12 @@ exports.uuid = () => uuid()
 exports.sha1 = (...x) => crypto.createHash('sha1').update(x.join('-')).digest('hex')
 
 exports.compare = (x, y) => x < y ? -1 : +(x !== y)
-exports.compareOperations = (o1, o2) =>
-    exports.compare(o1.timestamp, o2.timestamp)
-    || exports.compare(o1.id, o2.id)
+exports.compareChange = (c1, c2) =>
+    exports.compare(c1.timestamp, c2.timestamp)
+    || exports.compare(c1.id, c2.id)
+
+exports.stripChange = change => {
+    let result = Object.assign({}, change)
+    delete result.tree
+    return result
+}
