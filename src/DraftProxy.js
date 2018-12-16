@@ -46,7 +46,9 @@ class DraftProxy {
     }
 
     get(id) {
-        return this.draft.get(id)
+        let result = this.draft.get(id)
+        this.root = this.draft.root
+        return result
     }
 }
 
