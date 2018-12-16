@@ -1,7 +1,7 @@
 const EventEmitter = require('events')
 const ImmutableGameTree = require('@sabaki/immutable-gametree')
 const {uuid, sha1, compareChange, sanitizeChange} = require('./helper')
-const Draft = require('./Draft')
+const DraftProxy = require('./DraftProxy')
 
 class GameTree extends EventEmitter {
     constructor({id = null, getId = null, root} = {}) {
@@ -125,18 +125,18 @@ class GameTree extends EventEmitter {
     }
 
     mutate(mutator) {
-        let draftShim = null
+        let draftProxy = null
         let newTree = this._getGameTree().mutate(draft => {
-            draftShim = new Draft(this, draft)
+            draftProxy = new DraftProxy(this, draft)
 
-            return mutator(draftShim)
+            return mutator(draftProxy)
         })
 
-        if (draftShim == null || draftShim.changes.length === 0) {
+        if (draftProxy == null || draftProxy.changes.length === 0) {
             return this
         }
 
-        draftShim.changes.slice(-1)[0].tree = newTree
+        draftProxy.changes.slice(-1)[0].tree = newTree
 
         let result = new GameTree({
             id: this.id,
@@ -144,11 +144,11 @@ class GameTree extends EventEmitter {
         })
 
         Object.assign(result, {
-            timestamp: draftShim.timestamp,
+            timestamp: draftProxy.timestamp,
             base: this.base,
             root: newTree.root,
-            _changes: draftShim.changes,
-            _history: [...this._history, ...draftShim.changes]
+            _changes: draftProxy.changes,
+            _history: [...this._history, ...draftProxy.changes]
         })
 
         return result

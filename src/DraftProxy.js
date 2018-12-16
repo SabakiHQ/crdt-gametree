@@ -1,4 +1,4 @@
-class Draft {
+class DraftProxy {
     constructor(base, draft) {
         this.id = base.id
         this.timestamp = base.timestamp
@@ -50,4 +50,4 @@ class Draft {
     }
 }
 
-module.exports = Draft
+module.exports = DraftProxy
