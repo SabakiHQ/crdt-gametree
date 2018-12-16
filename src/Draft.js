@@ -1,8 +1,9 @@
 class Draft {
-    constructor(id, timestamp, draft) {
-        this.id = id
-        this.timestamp = timestamp
+    constructor(base, draft) {
+        this.id = base.id
+        this.timestamp = base.timestamp
         this.draft = draft
+        this.root = draft.root
         this.operations = []
 
         // Log operation methods

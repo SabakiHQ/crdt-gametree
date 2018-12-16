@@ -48,8 +48,8 @@ class GameTree extends EventEmitter {
 
     mutate(mutator) {
         let draftShim = null
-        let newTree = this.tree.mutate(draft => {
-            draftShim = new Draft(this.id, this.timestamp, draft)
+        let newTree = this._getGameTree().mutate(draft => {
+            draftShim = new Draft(this._getGameTree(), draft)
 
             return mutator(draftShim)
         })
@@ -68,8 +68,9 @@ class GameTree extends EventEmitter {
             id: this.id,
             timestamp: draftShim.timestamp,
             base: this.base,
+            root: newTree.root,
             changes: draftShim.operations,
-            _operations = [...this._operations, ...draftShim.operations]
+            _operations: [...this._operations, ...draftShim.operations]
         })
 
         return result
