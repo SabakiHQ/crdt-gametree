@@ -1,12 +1,9 @@
-const EventEmitter = require('events')
 const ImmutableGameTree = require('@sabaki/immutable-gametree')
 const {uuid, sha1, compareChange, sanitizeChange} = require('./helper')
 const DraftProxy = require('./DraftProxy')
 
-class GameTree extends EventEmitter {
+class GameTree {
     constructor({id = null, getId = null, root} = {}) {
-        super()
-
         this.id = id != null ? uuid() : id
         this.timestamp = 0
         this.getId = getId || (() => {
