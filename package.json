@@ -4,7 +4,7 @@
   "description": "An immutable, conflict-free replicated game tree data type.",
   "main": "./src/main.js",
   "scripts": {
-    "test": "tap tests/*.test.js"
+    "test": "tap tests/**/*.test.js"
   },
   "repository": {
     "type": "git",

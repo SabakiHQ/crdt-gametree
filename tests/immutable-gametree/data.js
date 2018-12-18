@@ -1,4 +1,4 @@
-const GameTree = require('..')
+const GameTree = require('../..')
 
 let id1, childId1, childId2, childId3, subChildId1
 let tree = new GameTree().mutate(draft => {
