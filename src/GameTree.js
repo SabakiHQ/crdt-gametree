@@ -63,7 +63,10 @@ class GameTree {
 
         for (let change of changes) {
             let i = newHistory.length
-            while (i > 0 && compareChange(newHistory[i - 1], change) >= 0) i--
+            let cmp = null
+
+            while (i > 0 && (cmp = compareChange(newHistory[i - 1], change)) > 0) i--
+            if (cmp === 0) continue
 
             changeIndex = Math.min(i, changeIndex)
             newHistory.splice(i, 0, change)
@@ -96,7 +99,7 @@ class GameTree {
                 try {
                     if (operation === 'appendNode') {
                         draft.UNSAFE_appendNodeWithId(args[0], returnValue, args[1])
-                    } else if (!operation.contains('UNSAFE_') && operation in draft) {
+                    } else if (!operation.includes('UNSAFE_') && operation in draft) {
                         draft[operation](...args)
                     }
                 } catch (err) {}

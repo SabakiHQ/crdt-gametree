@@ -1,10 +1,11 @@
 const t = require('tap')
 const GameTree = require('..')
+const stripIds = arr => arr.map(x => {delete x.id; return x})
 
 t.test('getChanges', t => {
     let tree = new GameTree()
 
-    t.deepEqual(tree.getChanges(), [])
+    t.equal(tree.getChanges().length, 0)
 
     let newTree = tree.mutate(draft => {
         draft.addToProperty(tree.root.id, 'MA', 'dd')
@@ -13,7 +14,7 @@ t.test('getChanges', t => {
     })
 
     t.equal(tree.id, newTree.id)
-    t.deepEqual(newTree.getChanges(), [
+    t.deepEqual(stripIds(newTree.getChanges()), [
         {
             "actorId": tree.id,
             "args": [
@@ -55,13 +56,13 @@ t.test('getChanges', t => {
 t.test('getHistory', t => {
     let tree = new GameTree()
 
-    t.deepEqual(tree.getHistory(), [])
+    t.deepEqual(tree.getHistory().length, 0)
 
     let newTree = tree.mutate(draft => {
         draft.addToProperty(tree.root.id, 'MA', 'dd')
     })
 
-    t.deepEqual(newTree.getHistory(), [
+    t.deepEqual(stripIds(newTree.getHistory()), [
         {
             "actorId": tree.id,
             "args": [
@@ -80,7 +81,7 @@ t.test('getHistory', t => {
         draft.removeFromProperty(tree.root.id, 'MA', 'dd')
     })
 
-    t.deepEqual(newTree.getHistory(), [
+    t.deepEqual(stripIds(newTree.getHistory()), [
         {
             "actorId": tree.id,
             "args": [
@@ -115,6 +116,55 @@ t.test('getHistory', t => {
             "timestamp": 2
         }
     ])
+
+    t.end()
+})
+
+t.test('applyChange should lead to eventual consistency', t => {
+    let base = new GameTree()
+    let tree1 = base.mutate(draft => {
+        draft.updateProperty(draft.root.id, 'CR', ['dd', 'df'])
+    })
+
+    let tree2 = new GameTree({root: base.root}).mutate(draft => {
+        draft.addToProperty(draft.root.id, 'MA', 'dd')
+        draft.removeFromProperty(draft.root.id, 'CR', 'df')
+    })
+
+    let newTree1 = tree1.applyChanges(tree2.getChanges())
+    let newTree2 = tree2.applyChanges(tree1.getChanges())
+    let appliedOwnChanges = tree1.applyChanges(tree1.getChanges())
+
+    t.deepEqual(newTree1.getChanges(), tree2.getChanges())
+    t.deepEqual(newTree2.getChanges(), tree1.getChanges())
+    t.deepEqual(newTree1.getHistory(), newTree2.getHistory())
+
+    t.deepEqual(appliedOwnChanges.root, tree1.root)
+    t.deepEqual(newTree1.root, newTree2.root)
+
+    t.end()
+})
+
+t.test('applyChange should resolve conflicts', t => {
+    let base = new GameTree()
+    let tree1 = base.mutate(draft => {
+        draft.updateProperty(draft.root.id, 'CR', ['dd', 'df'])
+    })
+
+    let tree2 = new GameTree({root: base.root}).mutate(draft => {
+        draft.updateProperty(draft.root.id, 'CR', ['qq'])
+    })
+
+    let changeId1 = tree1.getChanges()[0].id
+    let changeId2 = tree2.getChanges()[0].id
+    let newTree1 = tree1.applyChanges(tree2.getChanges())
+    let newTree2 = tree2.applyChanges(tree1.getChanges())
+
+    t.deepEqual(newTree1.getChanges(), tree2.getChanges())
+    t.deepEqual(newTree2.getChanges(), tree1.getChanges())
+    t.deepEqual(newTree1.getHistory(), newTree2.getHistory())
+    t.deepEqual(newTree1.root, newTree2.root)
+    t.deepEqual(newTree1.root.data.CR, changeId1 > changeId2 ? ['dd', 'df'] : ['qq'])
 
     t.end()
 })
