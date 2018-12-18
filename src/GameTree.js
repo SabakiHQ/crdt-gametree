@@ -4,7 +4,7 @@ const DraftProxy = require('./DraftProxy')
 
 class GameTree {
     constructor({id = null, getId = null, root} = {}) {
-        this.id = id != null ? uuid() : id
+        this.id = id == null ? uuid() : id
         this.timestamp = 0
         this.getId = getId || (() => {
             let id = 0
