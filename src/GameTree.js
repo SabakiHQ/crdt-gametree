@@ -43,8 +43,14 @@ class GameTree {
         return this.base
     }
 
-    getChanges() {
-        return this._changes.map(sanitizeChange)
+    getChanges(oldTree = null) {
+        if (oldTree == null) {
+            return this._changes.map(sanitizeChange)
+        }
+
+        return this._history
+            .filter(x => oldTree._history.find(y => x.id === y.id) == null)
+            .map(sanitizeChange)
     }
 
     getHistory() {
