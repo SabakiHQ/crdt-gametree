@@ -14,6 +14,7 @@ class GameTree {
         this.base = new ImmutableGameTree({getId: this.getId, root})
         this.root = this.base.root
 
+        this._createdFrom = null
         this._changes = []
         this._history = []
 
@@ -44,7 +45,7 @@ class GameTree {
     }
 
     getChanges(oldTree = null) {
-        if (oldTree == null) {
+        if (oldTree == null || oldTree === this._createdFrom) {
             return this._changes.map(sanitizeChange)
         }
 
@@ -123,6 +124,7 @@ class GameTree {
             timestamp: newTimestamp,
             base: this.base,
             root: newTree.root,
+            _createdFrom: this,
             _changes: changes,
             _history: newHistory
         })
@@ -153,6 +155,7 @@ class GameTree {
             timestamp: draftProxy.timestamp,
             base: this.base,
             root: newTree.root,
+            _createdFrom: this,
             _changes: draftProxy.changes,
             _history: [...this._history, ...draftProxy.changes]
         })
