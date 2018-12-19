@@ -10,11 +10,39 @@ t.test('getChanges', t => {
     let newTree = tree.mutate(draft => {
         draft.addToProperty(tree.root.id, 'MA', 'dd')
         draft.updateProperty(tree.root.id, 'MA', ['dd', 'df'])
+    })
+
+    let newTree2 = newTree.mutate(draft => {
         draft.removeFromProperty(tree.root.id, 'MA', 'df')
     })
 
     t.equal(tree.id, newTree.id)
+    t.equal(tree.id, newTree2.id)
     t.deepEqual(stripIds(newTree.getChanges()), [
+        {
+            "actorId": tree.id,
+            "args": [
+                tree.root.id,
+                "MA",
+                "dd"
+            ],
+            "operation": "addToProperty",
+            "returnValue": true,
+            "timestamp": 0
+        },
+        {
+            "actorId": tree.id,
+            "args": [
+                tree.root.id,
+                "MA",
+                ["dd", "df"]
+            ],
+            "operation": "updateProperty",
+            "returnValue": true,
+            "timestamp": 1
+        }
+    ])
+    t.deepEqual(stripIds(newTree2.getChanges(tree)), [
         {
             "actorId": tree.id,
             "args": [
