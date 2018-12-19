@@ -168,3 +168,41 @@ t.test('applyChange should resolve conflicts', t => {
 
     t.end()
 })
+
+t.test('applyChange should work with appendNode', t => {
+    let base = new GameTree()
+    let tree1 = base.mutate(draft => {
+        draft.appendNode(draft.root.id, {'CR': ['dd', 'df']})
+    })
+
+    let tree2 = new GameTree({root: base.root})
+        .applyChanges(tree1.getChanges())
+
+    t.deepEqual(tree1.getHistory(), tree2.getHistory())
+    t.deepEqual(tree1.root, tree2.root)
+
+    t.end()
+})
+
+t.test('do not allow unsafe mutations', t => {
+    t.throws(() => {
+        new GameTree().mutate(draft => {
+            draft.UNSAFE_appendNodeWithId(draft.root.id, 'hello', {})
+        })
+    })
+
+    t.throws(() => {
+        let tree = new GameTree()
+
+        tree.applyChanges([{
+            id: 0,
+            operation: 'UNSAFE_appendNodeWithId',
+            args: [tree.root.id, 'hello', {}],
+            returnValue: true,
+            actorId: tree.id,
+            timestamp: 1
+        }])
+    })
+
+    t.end()
+})

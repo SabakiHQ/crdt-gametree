@@ -102,13 +102,13 @@ class GameTree {
 
                 newTimestamp = Math.max(newTimestamp, timestamp + 1)
 
-                try {
-                    if (operation === 'appendNode') {
-                        draft.UNSAFE_appendNodeWithId(args[0], returnValue, args[1])
-                    } else if (!operation.includes('UNSAFE_') && operation in draft) {
-                        draft[operation](...args)
-                    }
-                } catch (err) {}
+                if (operation === 'appendNode') {
+                    draft.UNSAFE_appendNodeWithId(args[0], returnValue, args[1])
+                } else if (operation.includes('UNSAFE_')) {
+                    throw new Error('Unsafe changes are not supported.')
+                } else if (operation in draft) {
+                    draft[operation](...args)
+                }
             }
         })
 
