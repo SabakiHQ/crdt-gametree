@@ -25,7 +25,8 @@ class GameTree {
             'listNodes', 'listNodesHorizontally', 'listNodesVertically',
             'listCurrentNodes', 'listMainNodes', 'getLevel',
             'getSection', 'getCurrentHeight', 'getHeight',
-            'onCurrentLine', 'onMainLine', 'toJSON'
+            'getStructureHash', 'onCurrentLine', 'onMainLine',
+            'toJSON'
         ]
 
         for (let method of inheritedMethods) {
