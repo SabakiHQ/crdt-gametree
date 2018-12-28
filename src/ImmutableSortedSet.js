@@ -1,8 +1,10 @@
+const {compare} = require('./helper')
+
 class ImmutableSortedSet {
     constructor({data = null, cmp = null, sanitizer = null} = {}) {
         this.length = data == null ? 0 : data.index + 1
         this.data = data
-        this.cmp = cmp || ((a, b) => a < b ? -1 : a > b ? 1 : 0)
+        this.cmp = cmp || compare
         this.sanitizer = sanitizer || (x => x)
     }
 
