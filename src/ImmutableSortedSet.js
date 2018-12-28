@@ -12,6 +12,8 @@ class ImmutableSortedSet {
         let afterValues = []
         let baseData = null
 
+        values.sort(this.cmp)
+
         for (let itemData of this._reverseIterData()) {
             while (
                 values.length > 0
