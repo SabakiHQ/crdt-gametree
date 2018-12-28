@@ -79,16 +79,6 @@ class ImmutableSortedSet {
         }
     }
 
-    get(index) {
-        for (let [i, value] of this.reverseEnumerate()) {
-            if (i === index) {
-                return value
-            }
-        }
-
-        return null
-    }
-
     reverseFind(predicate) {
         for (let value of this.reverseIter()) {
             if (predicate(value)) return value
