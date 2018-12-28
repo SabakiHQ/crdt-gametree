@@ -1,6 +1,7 @@
 const ImmutableGameTree = require('@sabaki/immutable-gametree')
 const {uuid, sha1, compareChange, sanitizeChange} = require('./helper')
 const DraftProxy = require('./DraftProxy')
+const ImmutableSortedSet = require('./ImmutableSortedSet')
 
 class GameTree {
     constructor({id = null, getId = null, root} = {}) {
@@ -16,7 +17,10 @@ class GameTree {
 
         this._createdFrom = null
         this._changes = []
-        this._history = []
+        this._history = new ImmutableSortedSet({
+            cmp: compareChange,
+            sanitizer: sanitizeChange
+        })
 
         // Inherit some methods from @sabaki/immutable-gametree
 
@@ -38,8 +42,7 @@ class GameTree {
 
     _getGameTree() {
         if (this._history.length > 0) {
-            let lastOperation = this._history.slice(-1)[0]
-            return lastOperation.tree
+            return this._history.peek().tree
         }
 
         return this.base
@@ -50,57 +53,42 @@ class GameTree {
             return this._changes.map(sanitizeChange)
         }
 
-        return this._history
-            .filter(x => oldTree._history.find(y => x.id === y.id) == null)
+        return [...this._history.reverseIter()]
+            .filter(x => oldTree._history.reverseFind(y => x.id === y.id) == null)
             .map(sanitizeChange)
+            .reverse()
     }
 
-    getHistory() {
-        return this._history.map(sanitizeChange)
+    *listHistory() {
+        for (let change of this._history.reverseIter()) {
+            yield sanitizeChange(change)
+        }
     }
 
     applyChanges(changes) {
-        let newHistory = [...this._history]
-        let changeIndex = newHistory.length
+        if (changes.length === 0) return this
 
-        if (changes.length === 0) {
-            return this
-        }
-
-        // Insert changes
-
-        for (let change of changes) {
-            let i = newHistory.length
-            let cmp = null
-
-            while (i > 0 && (cmp = compareChange(newHistory[i - 1], change)) > 0) i--
-            if (cmp === 0) continue
-
-            changeIndex = Math.min(i, changeIndex)
-            newHistory.splice(i, 0, change)
-        }
-
-        // Remove outdated data
-
-        for (let i = changeIndex; i < newHistory.length; i++) {
-            newHistory[i] = Object.assign({}, newHistory[i], {
-                tree: null
-            })
-        }
+        let newHistory = this._history.push(...changes)
+        let base = this.base
+        let changesOnBase = []
 
         // Get an appropriate base
 
-        let baseIndex = changeIndex - 1
-        while (baseIndex >= 0 && newHistory[baseIndex].tree == null) baseIndex--
-
-        let base = baseIndex < 0 ? this.base : newHistory[baseIndex].tree
+        for (let change of newHistory.reverseIter()) {
+            if (change.tree == null) {
+                changesOnBase.push(change)
+            } else {
+                base = change.tree
+                break
+            }
+        }
 
         // Generate new tree
 
         let newTimestamp = this.timestamp
         let newTree = base.mutate(draft => {
-            for (let i = baseIndex + 1; i < newHistory.length; i++) {
-                let {operation, args, returnValue, timestamp} = newHistory[i]
+            for (let i = changesOnBase.length - 1; i >= 0; i--) {
+                let {operation, args, returnValue, timestamp} = changesOnBase[i]
 
                 newTimestamp = Math.max(newTimestamp, timestamp + 1)
 
@@ -114,7 +102,7 @@ class GameTree {
             }
         })
 
-        newHistory.slice(-1)[0].tree = newTree
+        newHistory.peek().tree = newTree
 
         let result = new GameTree({
             id: this.id,
@@ -145,12 +133,13 @@ class GameTree {
             return this
         }
 
-        draftProxy.changes.slice(-1)[0].tree = newTree
-
         let result = new GameTree({
             id: this.id,
             getId: this.getId
         })
+
+        let newHistory = this._history.push(...draftProxy.changes)
+        newHistory.peek().tree = newTree
 
         Object.assign(result, {
             timestamp: draftProxy.timestamp,
@@ -158,7 +147,7 @@ class GameTree {
             root: newTree.root,
             _createdFrom: this,
             _changes: draftProxy.changes,
-            _history: [...this._history, ...draftProxy.changes]
+            _history: newHistory
         })
 
         return result
