@@ -49,7 +49,9 @@ class GameTree {
     }
 
     getChanges(oldTree = null) {
-        if (oldTree == null || oldTree === this._createdFrom) {
+        if (oldTree === this) {
+            return []
+        } else if (oldTree == null || oldTree === this._createdFrom) {
             return this._changes.map(sanitizeChange)
         }
 
