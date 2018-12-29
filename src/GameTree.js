@@ -58,6 +58,10 @@ class GameTree {
             .map(sanitizeChange)
     }
 
+    getHistory() {
+        return [...this.listHistory()].reverse()
+    }
+
     *listHistory() {
         for (let change of this._history.reverseIter()) {
             yield sanitizeChange(change)

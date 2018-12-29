@@ -86,13 +86,13 @@ t.test('getChanges method', t => {
 t.test('getHistory method', t => {
     let tree = new GameTree()
 
-    t.deepEqual([...tree.listHistory()].length, 0)
+    t.deepEqual(tree.getHistory().length, 0)
 
     let newTree = tree.mutate(draft => {
         draft.addToProperty(tree.root.id, 'MA', 'dd')
     })
 
-    t.deepEqual(stripIds([...newTree.listHistory()]), [
+    t.deepEqual(stripIds(newTree.getHistory()), [
         {
             "actorId": tree.id,
             "args": [
@@ -111,7 +111,7 @@ t.test('getHistory method', t => {
         draft.removeFromProperty(tree.root.id, 'MA', 'dd')
     })
 
-    t.deepEqual(stripIds([...newTree.listHistory()]), [
+    t.deepEqual(stripIds(newTree.getHistory()), [
         {
             "actorId": tree.id,
             "args": [
@@ -145,7 +145,7 @@ t.test('getHistory method', t => {
             "returnValue": true,
             "timestamp": 2
         }
-    ].reverse())
+    ])
 
     t.end()
 })
