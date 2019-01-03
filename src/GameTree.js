@@ -4,7 +4,7 @@ const DraftProxy = require('./DraftProxy')
 const ImmutableSortedSet = require('./ImmutableSortedSet')
 
 class GameTree {
-    constructor({id = null, getId = null, root} = {}) {
+    constructor({id = null, getId = null, merger, root} = {}) {
         this.id = id == null ? uuid() : id
         this.timestamp = 0
         this.getId = getId || (() => {
@@ -12,7 +12,7 @@ class GameTree {
             return () => sha1(this.id, id++)
         })()
 
-        this.base = new ImmutableGameTree({getId: this.getId, root})
+        this.base = new ImmutableGameTree({getId: this.getId, merger, root})
         this.root = this.base.root
 
         this._createdFrom = null
