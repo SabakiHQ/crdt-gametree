@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/SabakiHQ/crdt-gametree",
   "dependencies": {
-    "@sabaki/immutable-gametree": "^1.7.0",
+    "@sabaki/immutable-gametree": "^1.7.1",
     "rusha": "^0.8.13",
     "uuid": "^3.3.2"
   },
