@@ -28,7 +28,7 @@ class DraftProxy {
                     returnValue,
                     actorId: this.id,
                     timestamp,
-                    tree: null
+                    snapshot: null
                 })
 
                 return returnValue
