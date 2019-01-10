@@ -55,9 +55,8 @@ class GameTree {
             return this._changes.map(sanitizeChange)
         }
 
-        return this._history.toJSON()
+        return this.getHistory()
             .filter(x => oldTree._history.reverseFind(y => x.id === y.id) == null)
-            .map(sanitizeChange)
     }
 
     getHistory() {
