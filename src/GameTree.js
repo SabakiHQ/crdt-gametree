@@ -92,12 +92,12 @@ class GameTree {
         let newTimestamp = this.timestamp
         let newTree = base.mutate(draft => {
             for (let i = changesOnBase.length - 1; i >= 0; i--) {
-                let {operation, args, returnValue, timestamp} = changesOnBase[i]
+                let {operation, args, ret, timestamp} = changesOnBase[i]
 
                 newTimestamp = Math.max(newTimestamp, timestamp + 1)
 
                 if (operation === 'appendNode') {
-                    draft.UNSAFE_appendNodeWithId(args[0], returnValue, args[1])
+                    draft.UNSAFE_appendNodeWithId(args[0], ret, args[1])
                 } else if (operation.includes('UNSAFE_')) {
                     throw new Error('Unsafe changes are not supported.')
                 } else if (operation in draft) {

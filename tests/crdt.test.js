@@ -27,7 +27,7 @@ t.test('getChanges method', t => {
                 "dd"
             ],
             "operation": "addToProperty",
-            "returnValue": true,
+            "ret": true,
             "timestamp": 0
         },
         {
@@ -38,7 +38,7 @@ t.test('getChanges method', t => {
                 ["dd", "df"]
             ],
             "operation": "updateProperty",
-            "returnValue": true,
+            "ret": true,
             "timestamp": 1
         }
     ])
@@ -52,7 +52,7 @@ t.test('getChanges method', t => {
                 "dd"
             ],
             "operation": "addToProperty",
-            "returnValue": true,
+            "ret": true,
             "timestamp": 0
         },
         {
@@ -63,7 +63,7 @@ t.test('getChanges method', t => {
                 ["dd", "df"]
             ],
             "operation": "updateProperty",
-            "returnValue": true,
+            "ret": true,
             "timestamp": 1
         },
         {
@@ -74,7 +74,7 @@ t.test('getChanges method', t => {
                 "df"
             ],
             "operation": "removeFromProperty",
-            "returnValue": true,
+            "ret": true,
             "timestamp": 2
         }
     ])
@@ -100,7 +100,7 @@ t.test('getHistory method', t => {
                 "dd"
             ],
             "operation": "addToProperty",
-            "returnValue": true,
+            "ret": true,
             "timestamp": 0
         }
     ])
@@ -119,7 +119,7 @@ t.test('getHistory method', t => {
                 "dd"
             ],
             "operation": "addToProperty",
-            "returnValue": true,
+            "ret": true,
             "timestamp": 0
         },
         {
@@ -130,7 +130,7 @@ t.test('getHistory method', t => {
                 "df"
             ],
             "operation": "addToProperty",
-            "returnValue": true,
+            "ret": true,
             "timestamp": 1
         },
         {
@@ -141,7 +141,7 @@ t.test('getHistory method', t => {
                 "dd"
             ],
             "operation": "removeFromProperty",
-            "returnValue": true,
+            "ret": true,
             "timestamp": 2
         }
     ])
@@ -227,7 +227,7 @@ t.test('do not allow unsafe mutations', t => {
             id: 0,
             operation: 'UNSAFE_appendNodeWithId',
             args: [tree.root.id, 'hello', {}],
-            returnValue: true,
+            ret: true,
             author: tree.id,
             timestamp: 1
         }])

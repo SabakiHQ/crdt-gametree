@@ -15,20 +15,20 @@ class DraftProxy {
 
         for (let method of operationMethods) {
             this[method] = (...args) => {
-                let returnValue = this.draft[method](...args)
+                let ret = this.draft[method](...args)
                 let timestamp = this.timestamp++
 
                 this.root = draft.root
                 this.changes.push({
                     operation: method,
                     args,
-                    returnValue,
+                    ret,
                     author: this.id,
                     timestamp,
                     snapshot: null
                 })
 
-                return returnValue
+                return ret
             }
         }
 
