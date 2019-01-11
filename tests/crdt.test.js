@@ -1,6 +1,5 @@
 const t = require('tap')
 const GameTree = require('..')
-const stripIds = arr => arr.map(x => {delete x.id; return x})
 
 t.test('getChanges method', t => {
     let tree = new GameTree()
@@ -19,9 +18,9 @@ t.test('getChanges method', t => {
     t.equal(tree.id, newTree.id)
     t.equal(tree.id, newTree2.id)
 
-    t.deepEqual(stripIds(newTree.getChanges()), [
+    t.deepEqual(newTree.getChanges(), [
         {
-            "actorId": tree.id,
+            "author": tree.id,
             "args": [
                 tree.root.id,
                 "MA",
@@ -32,7 +31,7 @@ t.test('getChanges method', t => {
             "timestamp": 0
         },
         {
-            "actorId": tree.id,
+            "author": tree.id,
             "args": [
                 tree.root.id,
                 "MA",
@@ -44,9 +43,9 @@ t.test('getChanges method', t => {
         }
     ])
 
-    t.deepEqual(stripIds(newTree2.getChanges(tree)), [
+    t.deepEqual(newTree2.getChanges(tree), [
         {
-            "actorId": tree.id,
+            "author": tree.id,
             "args": [
                 tree.root.id,
                 "MA",
@@ -57,7 +56,7 @@ t.test('getChanges method', t => {
             "timestamp": 0
         },
         {
-            "actorId": tree.id,
+            "author": tree.id,
             "args": [
                 tree.root.id,
                 "MA",
@@ -68,7 +67,7 @@ t.test('getChanges method', t => {
             "timestamp": 1
         },
         {
-            "actorId": tree.id,
+            "author": tree.id,
             "args": [
                 tree.root.id,
                 "MA",
@@ -92,9 +91,9 @@ t.test('getHistory method', t => {
         draft.addToProperty(tree.root.id, 'MA', 'dd')
     })
 
-    t.deepEqual(stripIds(newTree.getHistory()), [
+    t.deepEqual(newTree.getHistory(), [
         {
-            "actorId": tree.id,
+            "author": tree.id,
             "args": [
                 tree.root.id,
                 "MA",
@@ -111,9 +110,9 @@ t.test('getHistory method', t => {
         draft.removeFromProperty(tree.root.id, 'MA', 'dd')
     })
 
-    t.deepEqual(stripIds(newTree.getHistory()), [
+    t.deepEqual(newTree.getHistory(), [
         {
-            "actorId": tree.id,
+            "author": tree.id,
             "args": [
                 tree.root.id,
                 "MA",
@@ -124,7 +123,7 @@ t.test('getHistory method', t => {
             "timestamp": 0
         },
         {
-            "actorId": tree.id,
+            "author": tree.id,
             "args": [
                 tree.root.id,
                 "MA",
@@ -135,7 +134,7 @@ t.test('getHistory method', t => {
             "timestamp": 1
         },
         {
-            "actorId": tree.id,
+            "author": tree.id,
             "args": [
                 tree.root.id,
                 "MA",
@@ -185,8 +184,8 @@ t.test('applyChange should resolve conflicts', t => {
         draft.updateProperty(draft.root.id, 'CR', ['qq'])
     })
 
-    let changeId1 = tree1.getChanges()[0].id
-    let changeId2 = tree2.getChanges()[0].id
+    let changeId1 = tree1.getChanges()[0].author
+    let changeId2 = tree2.getChanges()[0].author
     let newTree1 = tree1.applyChanges(tree2.getChanges())
     let newTree2 = tree2.applyChanges(tree1.getChanges())
 
@@ -229,7 +228,7 @@ t.test('do not allow unsafe mutations', t => {
             operation: 'UNSAFE_appendNodeWithId',
             args: [tree.root.id, 'hello', {}],
             returnValue: true,
-            actorId: tree.id,
+            author: tree.id,
             timestamp: 1
         }])
     })
