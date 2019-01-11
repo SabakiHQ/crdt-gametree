@@ -42,7 +42,7 @@ class GameTree {
 
     _getGameTree() {
         if (this._history.length > 0) {
-            return this._history.peek().tree
+            return this._history.peek().snapshot
         }
 
         return this.base
@@ -79,10 +79,10 @@ class GameTree {
         // Get an appropriate base
 
         for (let change of newHistory.reverseIter()) {
-            if (change.tree == null) {
+            if (change.snapshot == null) {
                 changesOnBase.push(change)
             } else {
-                base = change.tree
+                base = change.snapshot
                 break
             }
         }
@@ -106,7 +106,7 @@ class GameTree {
             }
         })
 
-        newHistory.peek().tree = newTree
+        newHistory.peek().snapshot = newTree
 
         let result = new GameTree({
             id: this.id,
@@ -143,7 +143,7 @@ class GameTree {
         })
 
         let newHistory = this._history.push(...draftProxy.changes)
-        newHistory.peek().tree = newTree
+        newHistory.peek().snapshot = newTree
 
         Object.assign(result, {
             timestamp: draftProxy.timestamp,

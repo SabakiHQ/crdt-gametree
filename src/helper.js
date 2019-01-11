@@ -11,6 +11,6 @@ exports.compareChange = (c1, c2) =>
 
 exports.sanitizeChange = change => {
     let result = Object.assign({}, change)
-    delete result.tree
+    delete result.snapshot
     return result
 }
