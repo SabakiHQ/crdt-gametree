@@ -1,5 +1,3 @@
-const {sha1} = require('./helper')
-
 class DraftProxy {
     constructor(base, draft) {
         this.id = base.id
@@ -22,7 +20,7 @@ class DraftProxy {
 
                 this.root = draft.root
                 this.changes.push({
-                    id: sha1(this.id, timestamp),
+                    id: [this.id, timestamp].join('-'),
                     operation: method,
                     args,
                     returnValue,

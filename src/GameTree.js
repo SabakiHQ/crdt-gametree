@@ -1,5 +1,5 @@
 const ImmutableGameTree = require('@sabaki/immutable-gametree')
-const {uuid, sha1, compareChange, sanitizeChange} = require('./helper')
+const {uuid, compareChange, sanitizeChange} = require('./helper')
 const DraftProxy = require('./DraftProxy')
 const ImmutableSortedSet = require('./ImmutableSortedSet')
 
@@ -9,7 +9,7 @@ class GameTree {
         this.timestamp = 0
         this.getId = getId || (() => {
             let id = 0
-            return () => sha1(this.id, id++)
+            return () => [this.id, id++].join('-')
         })()
 
         this.base = new ImmutableGameTree({getId: this.getId, merger, root})
@@ -56,7 +56,7 @@ class GameTree {
         }
 
         return this.getHistory()
-            .filter(x => oldTree._history.reverseFind(y => x.id === y.id) == null)
+            .filter(x => oldTree._history.reverseFind(y => compareChange(x, y) === 0) == null)
     }
 
     getHistory() {
