@@ -166,7 +166,7 @@ t.test('applyChange should lead to eventual consistency', t => {
 
     t.deepEqual(newTree1.getChanges(), tree2.getChanges())
     t.deepEqual(newTree2.getChanges(), tree1.getChanges())
-    t.deepEqual(newTree1.listHistory(), newTree2.listHistory())
+    t.deepEqual(newTree1.getHistory(), newTree2.getHistory())
 
     t.deepEqual(appliedOwnChanges.root, tree1.root)
     t.deepEqual(newTree1.root, newTree2.root)
@@ -191,7 +191,7 @@ t.test('applyChange should resolve conflicts', t => {
 
     t.deepEqual(newTree1.getChanges(), tree2.getChanges())
     t.deepEqual(newTree2.getChanges(), tree1.getChanges())
-    t.deepEqual(newTree1.listHistory(), newTree2.listHistory())
+    t.deepEqual(newTree1.getHistory(), newTree2.getHistory())
     t.deepEqual(newTree1.root, newTree2.root)
     t.deepEqual(newTree1.root.data.CR, changeId1 > changeId2 ? ['dd', 'df'] : ['qq'])
 
@@ -207,7 +207,7 @@ t.test('applyChange should work with appendNode', t => {
     let tree2 = new GameTree({root: base.root})
         .applyChanges(tree1.getChanges())
 
-    t.deepEqual(tree1.listHistory(), tree2.listHistory())
+    t.deepEqual(tree1.getHistory(), tree2.getHistory())
     t.deepEqual(tree1.root, tree2.root)
 
     t.end()
