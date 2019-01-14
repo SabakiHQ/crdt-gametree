@@ -72,7 +72,7 @@ class GameTree {
     applyChanges(changes) {
         if (changes.length === 0) return this
 
-        let newHistory = this._history.push(...changes)
+        let newHistory = this._history.push(changes)
         let base = this.base
         let changesOnBase = []
 
@@ -142,7 +142,7 @@ class GameTree {
             getId: this.getId
         })
 
-        let newHistory = this._history.push(...draftProxy.changes)
+        let newHistory = this._history.push(draftProxy.changes)
         newHistory.peek().snapshot = newTree
 
         Object.assign(result, {

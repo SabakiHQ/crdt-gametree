@@ -8,12 +8,13 @@ class ImmutableSortedSet {
         this.sanitizer = sanitizer || (x => x)
     }
 
-    push(...values) {
+    push(values) {
         if (values.length === 0) return this
 
         let afterValues = []
         let baseData = null
 
+        values = values.slice()
         values.sort(this.cmp)
 
         for (let itemData of this._reverseIterData()) {
@@ -32,7 +33,9 @@ class ImmutableSortedSet {
             afterValues.push(itemData.value)
         }
 
-        afterValues.push(...values.reverse())
+        for (let value of values.reverse()) {
+            afterValues.push(value)
+        }
 
         // Sanitize data
 
