@@ -13,6 +13,7 @@ class GameTree {
         })()
 
         this.base = new ImmutableGameTree({getId: this.getId, merger, root})
+        this.merger = this.base.merger
         this.root = this.base.root
 
         this._createdFrom = null
