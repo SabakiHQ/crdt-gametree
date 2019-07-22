@@ -86,9 +86,13 @@ class GameTree {
 
             if (change._snapshot == null && recordChanges) {
                 if (change.operation === '$reset') {
-                    base = change.args[0]
+                    let newBase = change.args[0]
                         ? this._getSnapshot(history, change.args[0])
                         : this.base
+
+                    if (newBase == null) continue
+                    base = newBase
+
                     break
                 } else {
                     changesOnBase.push(change)
