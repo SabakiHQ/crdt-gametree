@@ -225,18 +225,5 @@ t.test('do not allow unsafe mutations', t => {
         })
     })
 
-    t.throws(() => {
-        let tree = new GameTree()
-
-        tree.applyChanges([{
-            id: 0,
-            operation: 'UNSAFE_appendNodeWithId',
-            args: [tree.root.id, 'hello', {}],
-            ret: true,
-            author: tree.id,
-            timestamp: 1
-        }])
-    })
-
     t.end()
 })

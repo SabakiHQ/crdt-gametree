@@ -70,44 +70,67 @@ class GameTree {
         }
     }
 
-    applyChanges(changes) {
-        if (changes.length === 0) return this
-
-        let newHistory = this._history.push(changes)
-        let base = this.base
-        let changesOnBase = []
-
+    _getSnapshot(history, changeId = null) {
         // Get an appropriate base
 
-        for (let change of newHistory.reverseIter()) {
-            if (change.snapshot == null) {
-                changesOnBase.push(change)
-            } else {
+        let snapshotChange = null
+        let recordChanges = false
+        let changesOnBase = []
+        let base = this.base
+
+        for (let change of history.reverseIter()) {
+            if (changeId == null || change.id === changeId) {
+                recordChanges = true
+                snapshotChange = change
+            }
+
+            if (change.snapshot == null && recordChanges) {
+                if (change.operation === '$reset') {
+                    base = change.args[0]
+                        ? this._getSnapshot(history, change.args[0])
+                        : this.base
+                    break
+                } else {
+                    changesOnBase.push(change)
+                }
+            } else if (recordChanges) {
                 base = change.snapshot
                 break
             }
         }
 
+        if (snapshotChange == null) {
+            return null
+        }
+
         // Generate new tree
 
-        let newTimestamp = this.timestamp
         let newTree = base.mutate(draft => {
             for (let i = changesOnBase.length - 1; i >= 0; i--) {
                 let {operation, args, ret, timestamp} = changesOnBase[i]
 
-                newTimestamp = Math.max(newTimestamp, timestamp + 1)
-
                 if (operation === 'appendNode') {
                     draft.UNSAFE_appendNodeWithId(args[0], ret, args[1])
                 } else if (operation.includes('UNSAFE_')) {
-                    throw new Error('Unsafe changes are not supported.')
+                    // Unsafe changes are not supported
                 } else if (operation in draft) {
                     draft[operation](...args)
                 }
             }
         })
 
-        newHistory.peek().snapshot = newTree
+        snapshotChange.snapshot = newTree
+
+        return newTree
+
+    }
+
+    applyChanges(changes) {
+        if (changes.length === 0) return this
+
+        let newHistory = this._history.push(changes)
+        let timestamp = newHistory.peek().timestamp + 1
+        let snapshot = this._getSnapshot(newHistory)
 
         let result = new GameTree({
             id: this.id,
@@ -115,12 +138,12 @@ class GameTree {
         })
 
         Object.assign(result, {
-            timestamp: newTimestamp,
+            timestamp,
             base: this.base,
-            root: newTree.root,
+            root: snapshot.root,
+            _history: newHistory,
             _createdFrom: this,
-            _changes: changes,
-            _history: newHistory
+            _changes: changes
         })
 
         return result
@@ -156,6 +179,22 @@ class GameTree {
         })
 
         return result
+    }
+
+    reset(changeId = null) {
+        let timestamp = this.timestamp++
+
+        return this.applyChanges([
+            {
+                id: [timestamp, this.id].join('-'),
+                operation: '$reset',
+                args: [changeId],
+                ret: null,
+                author: this.id,
+                timestamp,
+                snapshot: null
+            }
+        ])
     }
 }
 
