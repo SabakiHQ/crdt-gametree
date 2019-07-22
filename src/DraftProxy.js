@@ -20,6 +20,7 @@ class DraftProxy {
 
                 this.root = draft.root
                 this.changes.push({
+                    id: [timestamp, this.id].join('-'),
                     operation: method,
                     args,
                     ret,

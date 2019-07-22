@@ -1,6 +1,11 @@
 const t = require('tap')
 const GameTree = require('..')
 
+let sanitizeChange = change => {
+    delete change.id
+    return change
+}
+
 t.test('getChanges method', t => {
     let tree = new GameTree()
 
@@ -18,7 +23,7 @@ t.test('getChanges method', t => {
     t.equal(tree.id, newTree.id)
     t.equal(tree.id, newTree2.id)
 
-    t.deepEqual(newTree.getChanges(), [
+    t.deepEqual(newTree.getChanges().map(sanitizeChange), [
         {
             "author": tree.id,
             "args": [
@@ -43,7 +48,7 @@ t.test('getChanges method', t => {
         }
     ])
 
-    t.deepEqual(newTree2.getChanges(tree), [
+    t.deepEqual(newTree2.getChanges(tree).map(sanitizeChange), [
         {
             "author": tree.id,
             "args": [
@@ -91,7 +96,7 @@ t.test('getHistory method', t => {
         draft.addToProperty(tree.root.id, 'MA', 'dd')
     })
 
-    t.deepEqual(newTree.getHistory(), [
+    t.deepEqual(newTree.getHistory().map(sanitizeChange), [
         {
             "author": tree.id,
             "args": [
@@ -110,7 +115,7 @@ t.test('getHistory method', t => {
         draft.removeFromProperty(tree.root.id, 'MA', 'dd')
     })
 
-    t.deepEqual(newTree.getHistory(), [
+    t.deepEqual(newTree.getHistory().map(sanitizeChange), [
         {
             "author": tree.id,
             "args": [
