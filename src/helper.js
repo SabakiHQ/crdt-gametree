@@ -8,7 +8,8 @@ exports.compareChange = (c1, c2) =>
     || exports.compare(c1.author, c2.author)
 
 exports.sanitizeChange = change => {
-    let result = Object.assign({}, change)
-    delete result.snapshot
-    return result
+    return Object.keys(change).reduce((acc, key) => {
+        if (key[0] !== '_') acc[key] = change[key]
+        return acc
+    }, {})
 }

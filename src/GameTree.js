@@ -9,7 +9,7 @@ class GameTree {
         this.timestamp = 0
         this.getId = getId || (() => {
             let id = 0
-            return () => [this.id, id++].join('-')
+            return () => [id++, this.id].join('-')
         })()
 
         this.base = new ImmutableGameTree({getId: this.getId, merger, root})
@@ -43,7 +43,7 @@ class GameTree {
 
     _getGameTree() {
         if (this._history.length > 0) {
-            return this._history.peek().snapshot
+            return this._history.peek()._snapshot
         }
 
         return this.base
@@ -84,7 +84,7 @@ class GameTree {
                 snapshotChange = change
             }
 
-            if (change.snapshot == null && recordChanges) {
+            if (change._snapshot == null && recordChanges) {
                 if (change.operation === '$reset') {
                     base = change.args[0]
                         ? this._getSnapshot(history, change.args[0])
@@ -94,7 +94,7 @@ class GameTree {
                     changesOnBase.push(change)
                 }
             } else if (recordChanges) {
-                base = change.snapshot
+                base = change._snapshot
                 break
             }
         }
@@ -119,7 +119,7 @@ class GameTree {
             }
         })
 
-        snapshotChange.snapshot = newTree
+        snapshotChange._snapshot = newTree
 
         return newTree
 
@@ -167,7 +167,7 @@ class GameTree {
         })
 
         let newHistory = this._history.push(draftProxy.changes)
-        newHistory.peek().snapshot = newTree
+        newHistory.peek()._snapshot = newTree
 
         Object.assign(result, {
             timestamp: draftProxy.timestamp,
@@ -192,7 +192,7 @@ class GameTree {
                 ret: null,
                 author: this.id,
                 timestamp,
-                snapshot: null
+                _snapshot: null
             }
         ])
     }

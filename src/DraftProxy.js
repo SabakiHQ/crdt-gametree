@@ -26,7 +26,7 @@ class DraftProxy {
                     ret,
                     author: this.id,
                     timestamp,
-                    snapshot: null
+                    _snapshot: null
                 })
 
                 return ret
