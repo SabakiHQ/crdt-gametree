@@ -218,6 +218,40 @@ t.test('applyChange should work with appendNode', t => {
     t.end()
 })
 
+t.test('reset method', t => {
+    let second
+    let tree = new GameTree().mutate(draft => {
+        let id = draft.appendNode(draft.root.id, {B: ['dd']})
+        second = draft.appendNode(id, {W: ['pp']})
+    })
+
+    t.strictEqual(tree.getHeight(), 3)
+
+    let changes = tree.getChanges()
+    let emptyTree = tree.reset()
+    let newTree = tree.reset(changes[0].id)
+
+    t.strictEqual(emptyTree.getHeight(), 1)
+    t.strictEqual(emptyTree.get(second), null)
+    t.strictEqual(emptyTree.getHistory().length, 3)
+    t.strictEqual(emptyTree.getChanges().length, 1)
+
+    t.strictEqual(newTree.getHeight(), 2)
+    t.strictEqual(newTree.get(second), null)
+    t.strictEqual(newTree.getHistory().length, 3)
+    t.strictEqual(newTree.getChanges().length, 1)
+    t.strictEqual(newTree.getChanges(emptyTree).length, 1)
+
+    let newTree2 = emptyTree.mutate(draft => {
+        draft.appendNode(draft.root.id, {B: ['dd']})
+    })
+
+    t.strictEqual(newTree2.getHeight(), 2)
+    t.strictEqual(newTree2.getHistory().length, 4)
+
+    t.end()
+})
+
 t.test('do not allow unsafe mutations', t => {
     t.throws(() => {
         new GameTree().mutate(draft => {

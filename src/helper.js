@@ -7,9 +7,8 @@ exports.compareChange = (c1, c2) =>
     exports.compare(c1.timestamp, c2.timestamp)
     || exports.compare(c1.author, c2.author)
 
-exports.sanitizeChange = change => {
-    return Object.keys(change).reduce((acc, key) => {
+exports.sanitizeChange = change =>
+    Object.keys(change).reduce((acc, key) => {
         if (key[0] !== '_') acc[key] = change[key]
         return acc
     }, {})
-}
