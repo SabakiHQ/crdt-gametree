@@ -141,6 +141,7 @@ class GameTree {
         Object.assign(result, {
             timestamp,
             base: this.base,
+            merger: snapshot.merger,
             root: snapshot.root,
             _history: newHistory,
             _createdFrom: this,
@@ -173,6 +174,7 @@ class GameTree {
         Object.assign(result, {
             timestamp: draftProxy.timestamp,
             base: this.base,
+            merger: newTree.merger,
             root: newTree.root,
             _createdFrom: this,
             _changes: draftProxy.changes,
