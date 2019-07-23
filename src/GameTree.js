@@ -7,10 +7,7 @@ class GameTree {
     constructor({id = null, getId = null, merger, root} = {}) {
         this.id = id == null ? uuid() : id
         this.timestamp = 0
-        this.getId = getId || (() => {
-            let id = 0
-            return () => [id++, this.id].join('-')
-        })()
+        this.getId = getId || ((id = 0) => () => [id++, this.id].join('-'))()
 
         this.base = new ImmutableGameTree({getId: this.getId, merger, root})
         this.merger = this.base.merger
