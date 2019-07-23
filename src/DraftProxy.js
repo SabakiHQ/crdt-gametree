@@ -1,3 +1,5 @@
+const {encodeNumber} = require('./helper')
+
 class DraftProxy {
     constructor(base, draft) {
         this.id = base.id
@@ -20,7 +22,7 @@ class DraftProxy {
 
                 this.root = draft.root
                 this.changes.push({
-                    id: [timestamp, this.id].join('-'),
+                    id: [encodeNumber(timestamp), this.id].join('-'),
                     operation: method,
                     args,
                     ret,
