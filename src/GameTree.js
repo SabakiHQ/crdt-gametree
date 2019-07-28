@@ -4,7 +4,7 @@ const DraftProxy = require('./DraftProxy')
 const ImmutableSortedSet = require('./ImmutableSortedSet')
 
 class GameTree {
-    constructor({id = null, getId = null, merger, root} = {}) {
+    constructor({id = null, getId = null, merger, root, textProperties = []} = {}) {
         this.id = id == null ? uuid() : id
         this.timestamp = 0
         this.getId = getId || ((counter = 0) => () =>
@@ -14,6 +14,7 @@ class GameTree {
         this.base = new ImmutableGameTree({getId: this.getId, merger, root})
         this.merger = this.base.merger
         this.root = this.base.root
+        this.textProperties = textProperties
 
         this._createdFrom = null
         this._changes = []
@@ -137,7 +138,8 @@ class GameTree {
 
         let result = new GameTree({
             id: this.id,
-            getId: this.getId
+            getId: this.getId,
+            textProperties: this.textProperties
         })
 
         Object.assign(result, {
@@ -167,7 +169,8 @@ class GameTree {
 
         let result = new GameTree({
             id: this.id,
-            getId: this.getId
+            getId: this.getId,
+            textProperties: this.textProperties
         })
 
         let newHistory = this._history.push(draftProxy.changes)
