@@ -53,16 +53,16 @@ exports.sanitizeChange = change =>
 
 exports.diffArray = (fromArr, toArr, fromStart = 0, toStart = 0) => {
     if (toStart >= toArr.length && fromStart >= fromArr.length) {
-        return {delete: [], inserts: []}
+        return {deletions: [], insertions: []}
     } else if (toStart >= toArr.length) {
         return {
-            delete: [...Array(fromArr.length - fromStart)].map((_, i) => fromStart + i),
-            inserts: []
+            deletions: [...Array(fromArr.length - fromStart)].map((_, i) => fromStart + i),
+            insertions: []
         }
     } else if (fromStart >= fromArr.length) {
         return {
-            delete: [],
-            inserts: [{at: fromStart, insert: [...toArr.slice(toStart)]}],
+            deletions: [],
+            insertions: [{at: fromStart, insert: [...toArr.slice(toStart)]}],
         }
     } else if (fromArr[fromStart] === toArr[toStart]) {
         return exports.diffArray(fromArr, toArr, fromStart + 1, toStart + 1)
@@ -71,16 +71,16 @@ exports.diffArray = (fromArr, toArr, fromStart = 0, toStart = 0) => {
     let deletionResult = exports.diffArray(fromArr, toArr, fromStart + 1, toStart)
     let insertionResult = exports.diffArray(fromArr, toArr, fromStart, toStart + 1)
     let complexity = changes => changes.delete.length
-        + changes.inserts.reduce((sum, {insert}) => sum + insert.length, 0)
+        + changes.insertions.reduce((sum, {insert}) => sum + insert.length, 0)
 
     if (complexity(deletionResult) < complexity(insertionResult)) {
-        deletionResult.delete.push(fromStart)
+        deletionResult.deletions.push(fromStart)
         return deletionResult
     } else {
-        if (insertionResult.inserts.length > 0 && insertionResult.inserts[0].at === fromStart) {
-            insertionResult.inserts[0].insert.unshift(toArr[toStart])
+        if (insertionResult.insertions.length > 0 && insertionResult.insertions[0].at === fromStart) {
+            insertionResult.insertions[0].insert.unshift(toArr[toStart])
         } else {
-            insertionResult.inserts.unshift({at: fromStart, insert: [toArr[toStart]]})
+            insertionResult.insertions.unshift({at: fromStart, insert: [toArr[toStart]]})
         }
 
         return insertionResult

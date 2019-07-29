@@ -72,12 +72,12 @@ class StringCrdt {
         return this._idMapCache[key]
     }
 
-    applyChange({delete: deleteIds, inserts}) {
+    applyChange({deletions, insertions}) {
         let newData = [...this.data]
 
         // Handle inserts
 
-        for (let {at: id2, insert} of inserts) {
+        for (let {at: id2, insert} of insertions) {
             let index2 = id2 == null ? this.data.length : this._getIndexFromId(id2)
             let char1 = this.data[index2 - 1]
             let id1 = char1 == null ? null : char1.id
@@ -95,7 +95,7 @@ class StringCrdt {
 
         // Handle deletions
 
-        newData = newData.filter(({id}) => !deleteIds.some(equalsId(id)))
+        newData = newData.filter(({id}) => !deletions.some(equalsId(id)))
 
         let result = new StringCrdt(this.id)
         result.data = newData
