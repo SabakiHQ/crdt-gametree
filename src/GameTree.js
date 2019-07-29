@@ -1,5 +1,5 @@
 const ImmutableGameTree = require('@sabaki/immutable-gametree')
-const {encodeNumber, uuid, compareChange, sanitizeChange} = require('./helper')
+const {encodeNumber, uuid, compareChange, sanitizeChange, wrapTextProperties} = require('./helper')
 const DraftProxy = require('./DraftProxy')
 const ImmutableSortedSet = require('./ImmutableSortedSet')
 
@@ -114,18 +114,26 @@ class GameTree {
         // Generate new tree
 
         let newTree = base.mutate(draft => {
-            let draftProxy = new DraftProxy(base, draft)
+            let draftProxy = new DraftProxy(this, draft)
 
             for (let i = changesOnBase.length - 1; i >= 0; i--) {
                 let {operation, args, ret} = changesOnBase[i]
 
                 if (operation === 'appendNode') {
-                    draft.UNSAFE_appendNodeWithId(args[0], ret, args[1])
+                    draft.UNSAFE_appendNodeWithId(
+                        args[0],
+                        ret,
+                        wrapTextProperties(args[1], {
+                            id: this.id,
+                            textProperties: this.textProperties
+                        }),
+                        ...args.slice(2)
+                    )
                 } else if (operation.includes('UNSAFE_')) {
                     // Unsafe changes are not supported
                 } else if (operation in draft) {
                     draft[operation](...args)
-                } else if (opertion === '_updateTextProperty') {
+                } else if (operation === '_updateTextProperty') {
                     draftProxy._updateTextProperty(...args)
                 }
             }
@@ -140,7 +148,7 @@ class GameTree {
         if (changes.length === 0) return this
 
         let newHistory = this._history.push(changes)
-        let timestamp = newHistory.peek().timestamp + 1
+        let timestamp = newHistory.peek().timestamp
         let snapshot = this._getSnapshot(newHistory, newHistory.peek().id)
 
         let result = new GameTree({

@@ -83,6 +83,10 @@ class StringCrdt {
 
         // Handle inserts
 
+        let offset = 0
+
+        insertions.sort(({at: x}, {at: y}) => x == null ? 1 : y == null ? -1 : compareId(x, y))
+
         for (let {at: id2, insert} of insertions) {
             let index2 = id2 == null ? this.data.length + 1 : this._getIndexFromId(id2)
             let char1 = this.data[index2 - 1]
@@ -93,10 +97,12 @@ class StringCrdt {
                 return ids
             }, [])
 
-            newData.splice(index2, 0, ...insert.map((value, i) => ({
+            newData.splice(index2 + offset, 0, ...insert.map((value, i) => ({
                 id: newIds[i],
                 value
             })))
+
+            offset += insert.length
         }
 
         // Handle deletions

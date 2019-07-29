@@ -6,7 +6,7 @@ let sanitizeChange = change => {
     return change
 }
 
-t.test('getChanges method', t => {
+t.test('getChanges method', async t => {
     let tree = new GameTree()
 
     t.equal(tree.getChanges().length, 0)
@@ -83,11 +83,9 @@ t.test('getChanges method', t => {
             "timestamp": 3
         }
     ])
-
-    t.end()
 })
 
-t.test('getHistory method', t => {
+t.test('getHistory method', async t => {
     let tree = new GameTree()
 
     t.deepEqual(tree.getHistory().length, 0)
@@ -150,11 +148,9 @@ t.test('getHistory method', t => {
             "timestamp": 3
         }
     ])
-
-    t.end()
 })
 
-t.test('applyChange should lead to eventual consistency', t => {
+t.test('applyChange should lead to eventual consistency', async t => {
     let base = new GameTree()
     let tree1 = base.mutate(draft => {
         draft.updateProperty(draft.root.id, 'CR', ['dd', 'df'])
@@ -175,11 +171,9 @@ t.test('applyChange should lead to eventual consistency', t => {
 
     t.deepEqual(appliedOwnChanges.root, tree1.root)
     t.deepEqual(newTree1.root, newTree2.root)
-
-    t.end()
 })
 
-t.test('applyChange should resolve conflicts', t => {
+t.test('applyChange should resolve conflicts', async t => {
     let base = new GameTree()
     let tree1 = base.mutate(draft => {
         draft.updateProperty(draft.root.id, 'CR', ['dd', 'df'])
@@ -199,11 +193,9 @@ t.test('applyChange should resolve conflicts', t => {
     t.deepEqual(newTree1.getHistory(), newTree2.getHistory())
     t.deepEqual(newTree1.root, newTree2.root)
     t.deepEqual(newTree1.root.data.CR, changeId1 > changeId2 ? ['dd', 'df'] : ['qq'])
-
-    t.end()
 })
 
-t.test('applyChange should work with appendNode', t => {
+t.test('applyChange should work with appendNode', async t => {
     let base = new GameTree()
     let tree1 = base.mutate(draft => {
         draft.appendNode(draft.root.id, {'CR': ['dd', 'df']})
@@ -214,11 +206,9 @@ t.test('applyChange should work with appendNode', t => {
 
     t.deepEqual(tree1.getHistory(), tree2.getHistory())
     t.deepEqual(tree1.root, tree2.root)
-
-    t.end()
 })
 
-t.test('reset method', t => {
+t.test('reset method', async t => {
     let second
     let tree = new GameTree().mutate(draft => {
         let id = draft.appendNode(draft.root.id, {B: ['dd']})
@@ -248,16 +238,92 @@ t.test('reset method', t => {
 
     t.strictEqual(newTree2.getHeight(), 2)
     t.strictEqual(newTree2.getHistory().length, 4)
-
-    t.end()
 })
 
-t.test('do not allow unsafe mutations', t => {
+t.test('do not allow unsafe mutations', async t => {
     t.throws(() => {
         new GameTree().mutate(draft => {
             draft.UNSAFE_appendNodeWithId(draft.root.id, 'hello', {})
         })
     })
+})
 
-    t.end()
+t.test('text properties cannot be normally updated, added, or removed from', async t => {
+    let tree = new GameTree({textProperties: ['C']})
+
+    t.throws(() => {
+        tree.mutate(draft => {
+            draft.updateProperty(draft.root.id, 'C', ['hello world'])
+        })
+    })
+
+    t.throws(() => {
+        tree.mutate(draft => {
+            draft.addToProperty(draft.root.id, 'C', 'hello')
+        })
+    })
+
+    t.throws(() => {
+        tree.mutate(draft => {
+            draft.removeFromProperty(draft.root.id, 'C', 'hello')
+        })
+    })
+})
+
+t.test('text properties can be appended and removed', async t => {
+    let tree = new GameTree({textProperties: ['C']})
+
+    let id
+    let newTree = tree.mutate(draft => {
+        id = draft.appendNode(draft.root.id, {
+            C: ['hello world']
+        })
+    })
+
+    t.equal(newTree.get(id).data.C[0].valueOf(), 'hello world')
+
+    let removed = newTree.mutate(draft => {
+        draft.removeProperty(id, 'C')
+    })
+
+    t.equal(removed.get(id).data.C, undefined)
+})
+
+t.test('text properties should be updatable', async t => {
+    let id
+    let tree = new GameTree({textProperties: ['C']}).mutate(draft => {
+        id = draft.appendNode(draft.root.id, {C: ['hllo world']})
+    })
+
+    let newTree = tree.mutate(draft => {
+        draft.updateTextProperty(id, 'C', 'hello world')
+    })
+
+    t.equal(newTree.get(id).data.C[0].toString(), 'hello world')
+})
+
+t.test('text property updates should be conflict-free', async t => {
+    let options = {
+        textProperties: ['C'],
+        root: {id: 'root', data: {}, parentId: null, children: []}
+    }
+
+    let id
+    let tree1 = new GameTree(options).mutate(draft => {
+        id = draft.appendNode(draft.root.id, {C: ['hlllo world']})
+    })
+    let tree2 = new GameTree(options).applyChanges(tree1.getChanges())
+
+    let newTree1 = tree1.mutate(draft => {
+        draft.updateTextProperty(id, 'C', 'hello world')
+    })
+    let newTree2 = tree2.mutate(draft => {
+        draft.updateTextProperty(id, 'C', 'hllo cruel world!')
+    })
+
+    let merged1 = newTree1.applyChanges(newTree2.getChanges())
+    let merged2 = newTree2.applyChanges(newTree1.getChanges())
+
+    console.log(merged1.get(id).data.C[0])
+    t.equal(merged1.get(id).data.C[0].valueOf(), merged2.get(id).data.C[0].valueOf())
 })

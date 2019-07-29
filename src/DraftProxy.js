@@ -1,5 +1,5 @@
 const StringCrdt = require('./StringCrdt')
-const {diffArray, encodeNumber} = require('./helper')
+const {diffArray, encodeNumber, wrapTextProperties} = require('./helper')
 
 const incompatibleTextOperationMethods = [
     'updateProperty', 'addToProperty', 'removeFromProperty'
@@ -35,7 +35,7 @@ class DraftProxy {
 
         for (let method of unsafeOperationMethods) {
             this[method] = () => {
-                throw new Error('Unsafe operation methods are not supported.')
+                throw new Error('Unsafe operation methods are not supported')
             }
         }
     }
@@ -58,6 +58,19 @@ class DraftProxy {
             throw new Error(`Properties specified in 'textProperties' is incompatible with '${operation}'`)
         }
 
+        let plainArgs = args
+
+        if (operation === 'appendNode') {
+            args = [
+                plainArgs[0],
+                wrapTextProperties(plainArgs[1], {
+                    id: this.id,
+                    textProperties: this.textProperties
+                }),
+                ...plainArgs.slice(2)
+            ]
+        }
+
         let ret = this.draft[operation](...args)
 
         // Log changes
@@ -66,7 +79,7 @@ class DraftProxy {
         this.changes.push({
             id: this._createId(),
             operation,
-            args,
+            args: plainArgs,
             ret,
             author: this.id,
             timestamp: this.timestamp,
@@ -86,8 +99,6 @@ class DraftProxy {
 
         if (node.data[property] == null) {
             node.data[property] = [new StringCrdt(this.id, '')]
-        } else if (!(node.data[property][0] instanceof StringCrdt)) {
-            node.data[property] = [new StringCrdt(this.id, node.data[property][0])]
         }
 
         return node.data[property][0]

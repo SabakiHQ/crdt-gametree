@@ -70,7 +70,7 @@ exports.diffArray = (fromArr, toArr, fromStart = 0, toStart = 0) => {
 
     let deletionResult = exports.diffArray(fromArr, toArr, fromStart + 1, toStart)
     let insertionResult = exports.diffArray(fromArr, toArr, fromStart, toStart + 1)
-    let complexity = changes => changes.delete.length
+    let complexity = changes => changes.deletions.length
         + changes.insertions.reduce((sum, {insert}) => sum + insert.length, 0)
 
     if (complexity(deletionResult) < complexity(insertionResult)) {
@@ -85,4 +85,22 @@ exports.diffArray = (fromArr, toArr, fromStart = 0, toStart = 0) => {
 
         return insertionResult
     }
+}
+
+exports.wrapTextProperties = (data, {id, textProperties}) => {
+    const StringCrdt = require('./StringCrdt')
+
+    return Object.keys(data).reduce((acc, property) => {
+        if (
+            textProperties.includes(property)
+            && data[property] != null
+            && data[property][0] != null
+        ) {
+            acc[property] = [new StringCrdt(id, data[property][0])]
+        } else {
+            acc[property] = data[property]
+        }
+
+        return acc
+    }, {})
 }
