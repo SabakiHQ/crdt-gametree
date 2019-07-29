@@ -107,8 +107,12 @@ class StringCrdt {
         return this.data.reduce((acc, x) => acc + x.value, '')
     }
 
-    toJSON() {
+    valueOf() {
         return this.toString()
+    }
+
+    toJSON() {
+        return this.valueOf()
     }
 }
 
