@@ -72,6 +72,10 @@ class StringCrdt {
         return this._idMapCache[key]
     }
 
+    getIdFromIndex(index) {
+        return this.data[index] == null ? null : this.data[index].id
+    }
+
     applyChange({deletions = [], insertions = []}) {
         if (deletions.length === 0 && insertions.length === 0) return this
 
