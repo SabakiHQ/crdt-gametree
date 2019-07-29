@@ -33,7 +33,7 @@ t.test('getChanges method', t => {
             ],
             "operation": "addToProperty",
             "ret": true,
-            "timestamp": 0
+            "timestamp": 1
         },
         {
             "author": tree.id,
@@ -44,7 +44,7 @@ t.test('getChanges method', t => {
             ],
             "operation": "updateProperty",
             "ret": true,
-            "timestamp": 1
+            "timestamp": 2
         }
     ])
 
@@ -58,7 +58,7 @@ t.test('getChanges method', t => {
             ],
             "operation": "addToProperty",
             "ret": true,
-            "timestamp": 0
+            "timestamp": 1
         },
         {
             "author": tree.id,
@@ -69,7 +69,7 @@ t.test('getChanges method', t => {
             ],
             "operation": "updateProperty",
             "ret": true,
-            "timestamp": 1
+            "timestamp": 2
         },
         {
             "author": tree.id,
@@ -80,7 +80,7 @@ t.test('getChanges method', t => {
             ],
             "operation": "removeFromProperty",
             "ret": true,
-            "timestamp": 2
+            "timestamp": 3
         }
     ])
 
@@ -106,7 +106,7 @@ t.test('getHistory method', t => {
             ],
             "operation": "addToProperty",
             "ret": true,
-            "timestamp": 0
+            "timestamp": 1
         }
     ])
 
@@ -125,7 +125,7 @@ t.test('getHistory method', t => {
             ],
             "operation": "addToProperty",
             "ret": true,
-            "timestamp": 0
+            "timestamp": 1
         },
         {
             "author": tree.id,
@@ -136,7 +136,7 @@ t.test('getHistory method', t => {
             ],
             "operation": "addToProperty",
             "ret": true,
-            "timestamp": 1
+            "timestamp": 2
         },
         {
             "author": tree.id,
@@ -147,7 +147,7 @@ t.test('getHistory method', t => {
             ],
             "operation": "removeFromProperty",
             "ret": true,
-            "timestamp": 2
+            "timestamp": 3
         }
     ])
 

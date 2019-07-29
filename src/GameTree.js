@@ -3,6 +3,15 @@ const {encodeNumber, uuid, compareChange, sanitizeChange} = require('./helper')
 const DraftProxy = require('./DraftProxy')
 const ImmutableSortedSet = require('./ImmutableSortedSet')
 
+const inheritedMethods = [
+    'get', 'getSequence', 'navigate',
+    'listNodes', 'listNodesHorizontally', 'listNodesVertically',
+    'listCurrentNodes', 'listMainNodes', 'getLevel',
+    'getSection', 'getCurrentHeight', 'getHeight',
+    'getStructureHash', 'onCurrentLine', 'onMainLine',
+    'toJSON'
+]
+
 class GameTree {
     constructor({id = null, getId = null, merger, root, textProperties = []} = {}) {
         this.id = id == null ? uuid() : id
@@ -24,15 +33,6 @@ class GameTree {
         })
 
         // Inherit some methods from @sabaki/immutable-gametree
-
-        let inheritedMethods = [
-            'get', 'getSequence', 'navigate',
-            'listNodes', 'listNodesHorizontally', 'listNodesVertically',
-            'listCurrentNodes', 'listMainNodes', 'getLevel',
-            'getSection', 'getCurrentHeight', 'getHeight',
-            'getStructureHash', 'onCurrentLine', 'onMainLine',
-            'toJSON'
-        ]
 
         for (let method of inheritedMethods) {
             this[method] = (...args) => {
@@ -114,8 +114,10 @@ class GameTree {
         // Generate new tree
 
         let newTree = base.mutate(draft => {
+            let draftProxy = new DraftProxy(base, draft)
+
             for (let i = changesOnBase.length - 1; i >= 0; i--) {
-                let {operation, args, ret, timestamp} = changesOnBase[i]
+                let {operation, args, ret} = changesOnBase[i]
 
                 if (operation === 'appendNode') {
                     draft.UNSAFE_appendNodeWithId(args[0], ret, args[1])
@@ -123,6 +125,8 @@ class GameTree {
                     // Unsafe changes are not supported
                 } else if (operation in draft) {
                     draft[operation](...args)
+                } else if (opertion === '_updateTextProperty') {
+                    draftProxy._updateTextProperty(...args)
                 }
             }
         })
@@ -193,7 +197,7 @@ class GameTree {
     }
 
     reset(changeId = null) {
-        let timestamp = this.timestamp++
+        let timestamp = ++this.timestamp
 
         return this.applyChanges([
             {
@@ -202,8 +206,7 @@ class GameTree {
                 args: [changeId],
                 ret: null,
                 author: this.id,
-                timestamp,
-                _snapshot: null
+                timestamp
             }
         ])
     }
