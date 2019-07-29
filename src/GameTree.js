@@ -71,6 +71,10 @@ class GameTree {
     }
 
     _getSnapshot(history, changeId = null) {
+        if (changeId == null) {
+            return this.base
+        }
+
         // Get an appropriate base
 
         let snapshotChange = null
@@ -79,7 +83,7 @@ class GameTree {
         let base = this.base
 
         for (let change of history.reverseIter()) {
-            if (changeId == null || change.id === changeId) {
+            if (change.id === changeId) {
                 recordChanges = true
                 snapshotChange = change
             }
@@ -126,7 +130,6 @@ class GameTree {
         snapshotChange._snapshot = newTree
 
         return newTree
-
     }
 
     applyChanges(changes) {
@@ -134,7 +137,7 @@ class GameTree {
 
         let newHistory = this._history.push(changes)
         let timestamp = newHistory.peek().timestamp + 1
-        let snapshot = this._getSnapshot(newHistory)
+        let snapshot = this._getSnapshot(newHistory, newHistory.peek().id)
 
         let result = new GameTree({
             id: this.id,
