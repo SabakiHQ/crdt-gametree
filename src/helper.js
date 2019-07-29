@@ -34,6 +34,17 @@ exports.compareChange = (c1, c2) =>
     exports.compare(c1.timestamp, c2.timestamp)
     || exports.compare(c1.author, c2.author)
 
+exports.compareLexically = (compareFn = exports.compare) => (arr1, arr2) => {
+    let inner = i => {
+        if (i >= arr1.length || i >= arr2.length) return arr1.length - arr2.length
+
+        let compare = compareFn(arr1[i], arr2[i])
+        return compare !== 0 ? compare : inner(i + 1)
+    }
+
+    return inner(0)
+}
+
 exports.sanitizeChange = change =>
     Object.keys(change).reduce((acc, key) => {
         if (key[0] !== '_') acc[key] = change[key]
