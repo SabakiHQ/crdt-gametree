@@ -1,5 +1,5 @@
 const StringCrdt = require('./StringCrdt')
-const {diffArray, encodeNumber, wrapTextProperties} = require('./helper')
+const {diffArray, encodeNumber, wrapProperties} = require('./helper')
 
 const incompatibleTextOperationMethods = [
     'updateProperty', 'addToProperty', 'removeFromProperty'
@@ -63,10 +63,11 @@ class DraftProxy {
         if (operation === 'appendNode') {
             args = [
                 plainArgs[0],
-                wrapTextProperties(plainArgs[1], {
-                    id: this.id,
-                    textProperties: this.textProperties
-                }),
+                wrapProperties(
+                    plainArgs[1],
+                    this.textProperties,
+                    x => new StringCrdt(this.id, x)
+                ),
                 ...plainArgs.slice(2)
             ]
         }

@@ -87,16 +87,14 @@ exports.diffArray = (fromArr, toArr, fromStart = 0, toStart = 0) => {
     }
 }
 
-exports.wrapTextProperties = (data, {id, textProperties}) => {
-    const StringCrdt = require('./StringCrdt')
-
+exports.wrapProperties = (data, properties, fn) => {
     return Object.keys(data).reduce((acc, property) => {
         if (
-            textProperties.includes(property)
+            properties.includes(property)
             && data[property] != null
             && data[property][0] != null
         ) {
-            acc[property] = [new StringCrdt(id, data[property][0])]
+            acc[property] = [fn(data[property][0])]
         } else {
             acc[property] = data[property]
         }

@@ -1,6 +1,7 @@
 const ImmutableGameTree = require('@sabaki/immutable-gametree')
-const {encodeNumber, uuid, compareChange, sanitizeChange, wrapTextProperties} = require('./helper')
+const {encodeNumber, uuid, compareChange, sanitizeChange, wrapProperties} = require('./helper')
 const DraftProxy = require('./DraftProxy')
+const StringCrdt = require('./StringCrdt')
 const ImmutableSortedSet = require('./ImmutableSortedSet')
 
 const inheritedMethods = [
@@ -123,10 +124,11 @@ class GameTree {
                     draft.UNSAFE_appendNodeWithId(
                         args[0],
                         ret,
-                        wrapTextProperties(args[1], {
-                            id: this.id,
-                            textProperties: this.textProperties
-                        }),
+                        wrapProperties(
+                            args[1],
+                            this.textProperties,
+                            x => new StringCrdt(this.id, x)
+                        ),
                         ...args.slice(2)
                     )
                 } else if (operation.includes('UNSAFE_')) {
