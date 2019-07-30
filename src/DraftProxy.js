@@ -98,7 +98,7 @@ class DraftProxy {
         if (node == null) return
 
         if (node.data[property] == null) {
-            node.data[property] = [new StringCrdt(this.id, '')]
+            node.data[property] = [new StringCrdt(this.id)]
         }
 
         return node.data[property][0]

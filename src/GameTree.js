@@ -17,7 +17,7 @@ class GameTree {
         this.id = id == null ? uuid() : id
         this.timestamp = 0
         this.getId = getId || ((counter = 0) => () =>
-            [encodeNumber(counter++), this.id].join('-')
+            [encodeNumber(++counter), this.id].join('-')
         )()
 
         this.base = new ImmutableGameTree({getId: this.getId, merger, root})

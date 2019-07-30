@@ -270,7 +270,7 @@ t.test('text properties cannot be normally updated, added, or removed from', asy
     })
 })
 
-t.test('text properties can be appended and removed', async t => {
+t.test('text properties can be removed, but not appended', async t => {
     let tree = new GameTree({textProperties: ['C']})
 
     let id
@@ -324,6 +324,5 @@ t.test('text property updates should be conflict-free', async t => {
     let merged1 = newTree1.applyChanges(newTree2.getChanges())
     let merged2 = newTree2.applyChanges(newTree1.getChanges())
 
-    console.log(merged1.get(id).data.C[0])
     t.equal(merged1.get(id).data.C[0].valueOf(), merged2.get(id).data.C[0].valueOf())
 })

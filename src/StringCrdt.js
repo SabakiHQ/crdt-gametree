@@ -9,7 +9,7 @@ class StringCrdt {
 
         this.id = id
         this.data = characters.map((char, i) => ({
-            id: [[i, id]],
+            id: [[i, "r"]],
             value: char
         }))
     }

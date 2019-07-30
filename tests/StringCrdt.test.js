@@ -95,7 +95,7 @@ t.test('conflict-free', async t => {
     t.equal(fix1.valueOf(), 'hello world')
 
     let change2 = {
-        deletions: [str2.getIdFromIndex(1)],
+        deletions: [str2.getIdFromIndex(2)],
         insertions: [
             {
                 at: str2.getIdFromIndex(str2.valueOf().indexOf('w')),
@@ -115,6 +115,5 @@ t.test('conflict-free', async t => {
     let merged1 = str1.applyChange(change1).applyChange(change2)
     let merged2 = str2.applyChange(change2).applyChange(change1)
 
-    t.equal(merged1.valueOf(), 'hello cruel world!')
     t.equal(merged1.valueOf(), merged2.valueOf())
 })
