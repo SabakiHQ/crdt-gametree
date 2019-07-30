@@ -301,3 +301,35 @@ t.test('text property updates should be conflict-free', async t => {
     t.equal(merged1.get(id).data.C[0].valueOf(), 'helo cruel world!')
     t.equal(merged1.get(id).data.C[0].valueOf(), merged2.get(id).data.C[0].valueOf())
 })
+
+t.test('text property inserts should be continuous for given author', async t => {
+    let options = {
+        textProperties: ['C'],
+        root: {id: 'root', data: {}, parentId: null, children: []}
+    }
+
+    let id
+    let value = 'Hello World'
+    let tree1 = new GameTree(options).mutate(draft => {
+        id = draft.appendNode(draft.root.id, {C: [value]})
+    })
+    let tree2 = new GameTree(options).applyChanges(tree1.getChanges())
+
+    let newTree1 = tree1.mutate(draft => {
+        draft.updateTextProperty(id, 'C', {
+            insertions: [{at: value.length, insert: [...', Yichuan']}]
+        })
+    })
+    let newTree2 = tree2.mutate(draft => {
+        draft.updateTextProperty(id, 'C', {
+            insertions: [{at: value.length, insert: [...', David']}]
+        })
+    })
+
+    let merged1 = newTree1.applyChanges(newTree2.getChanges())
+    let merged2 = newTree2.applyChanges(newTree1.getChanges())
+    let str = merged1.get(id).data.C[0].valueOf()
+
+    t.assert(str.endsWith(', Yichuan') || str.endsWith(', David'))
+    t.equal(str, merged2.get(id).data.C[0].valueOf())
+})

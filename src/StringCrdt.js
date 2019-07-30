@@ -40,7 +40,15 @@ class StringCrdt {
         }
     }
 
-    _getIndexFromId(id) {
+    _getIdsBetween(id1, id2, length) {
+        let id = this._getIdBetween(id1, id2)
+
+        return [...Array(length)].map((_, i) =>
+            [...id.slice(0, -1), [...id.slice(-1)[0], i]]
+        )
+    }
+
+    _getIndexFromId(id, {startIndex = 0, endIndex = this.data.length} = {}) {
         let stringify = JSON.stringify
         let key = stringify(id)
 
@@ -50,8 +58,6 @@ class StringCrdt {
         if (this._idMapCache[key] == null) {
             // Look for index with binary search
 
-            let startIndex = 0
-            let endIndex = this.data.length
             let found = null
 
             while (endIndex - startIndex >= 1) {
@@ -92,20 +98,27 @@ class StringCrdt {
         insertions.sort(({at: x}, {at: y}) => x == null ? 1 : y == null ? -1 : compareId(x, y))
 
         for (let insertion of insertions) {
-            let {at: id2, insert, ids} = insertion
-            let index2 = id2 == null ? this.data.length + 1 : this._getIndexFromId(id2)
-            let char1 = this.data[index2 - 1]
-            let id1 = char1 == null ? null : char1.id
+            let {insert, ids} = insertion
+            let insertIndex
 
-            let newIds = ids != null ? ids : insert.reduce((ids, value, i) => {
-                ids.push(this._getIdBetween(ids[i - 1] || id1, id2))
-                return ids
-            }, [])
+            if (insert.length === 0) continue
 
-            insertion.ids = newIds
+            if (ids == null) {
+                let id2 = insertion.at
+                let index2 = id2 == null ? this.data.length : this._getIndexFromId(id2)
+                let char1 = this.data[index2 - 1]
+                let id1 = char1 == null ? null : char1.id
+                let newIds = this._getIdsBetween(id1, id2, insert.length)
 
-            newData.splice(index2 + offset, 0, ...insert.map((value, i) => ({
-                id: newIds[i],
+                insertion.ids = ids = newIds
+                insertIndex = index2 + offset
+            } else {
+                let index2 = this._getIndexFromId(ids.slice(-1)[0])
+                insertIndex = index2 + offset
+            }
+
+            newData.splice(insertIndex, 0, ...insert.map((value, i) => ({
+                id: ids[i],
                 value
             })))
 
