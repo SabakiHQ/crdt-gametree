@@ -89,7 +89,7 @@ class DraftProxy {
         return ret
     }
 
-    _wrapTextProperty(id, property) {
+    _getTextProperty(id, property) {
         if (!this.textProperties.includes(property)) {
             throw new Error(`Property has to be specified in 'textProperties'`)
         }
@@ -108,7 +108,7 @@ class DraftProxy {
         let node = this.get(id)
         if (node == null) return false
 
-        let crdt = this._wrapTextProperty(id, property)
+        let crdt = this._getTextProperty(id, property)
         let diff = diffArray(crdt.valueOf(), value)
 
         let change = {
@@ -127,7 +127,7 @@ class DraftProxy {
             let node = this.get(id)
             if (node == null) return false
 
-            let crdt = this._wrapTextProperty(id, property)
+            let crdt = this._getTextProperty(id, property)
             node.data[property] = [crdt.applyChange(change)]
 
             return true
