@@ -270,38 +270,6 @@ t.test('text properties cannot be normally updated, added, or removed from', asy
     })
 })
 
-t.test('text properties can be removed, but not appended', async t => {
-    let tree = new GameTree({textProperties: ['C']})
-
-    let id
-    let newTree = tree.mutate(draft => {
-        id = draft.appendNode(draft.root.id, {
-            C: ['hello world']
-        })
-    })
-
-    t.equal(newTree.get(id).data.C[0].valueOf(), 'hello world')
-
-    let removed = newTree.mutate(draft => {
-        draft.removeProperty(id, 'C')
-    })
-
-    t.equal(removed.get(id).data.C, undefined)
-})
-
-t.test('text properties should be updatable', async t => {
-    let id
-    let tree = new GameTree({textProperties: ['C']}).mutate(draft => {
-        id = draft.appendNode(draft.root.id, {C: ['hllo world']})
-    })
-
-    let newTree = tree.mutate(draft => {
-        draft.updateTextProperty(id, 'C', 'hello world')
-    })
-
-    t.equal(newTree.get(id).data.C[0].toString(), 'hello world')
-})
-
 t.test('text property updates should be conflict-free', async t => {
     let options = {
         textProperties: ['C'],
@@ -315,14 +283,21 @@ t.test('text property updates should be conflict-free', async t => {
     let tree2 = new GameTree(options).applyChanges(tree1.getChanges())
 
     let newTree1 = tree1.mutate(draft => {
-        draft.updateTextProperty(id, 'C', 'hello world')
+        draft.updateTextProperty(id, 'C', {
+            deletions: [1],
+            insertions: [{at: 1, insert: ['e']}]
+        })
     })
     let newTree2 = tree2.mutate(draft => {
-        draft.updateTextProperty(id, 'C', 'hllo cruel world!')
+        draft.updateTextProperty(id, 'C', {
+            deletions: [3],
+            insertions: [{at: 5, insert: [...' cruel']}, {at: 11, insert: ['!']}]
+        })
     })
 
     let merged1 = newTree1.applyChanges(newTree2.getChanges())
     let merged2 = newTree2.applyChanges(newTree1.getChanges())
 
+    t.equal(merged1.get(id).data.C[0].valueOf(), 'helo cruel world!')
     t.equal(merged1.get(id).data.C[0].valueOf(), merged2.get(id).data.C[0].valueOf())
 })
