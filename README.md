@@ -15,16 +15,17 @@ $ npm install @sabaki/crdt-gametree
 ~~~js
 const GameTree = require('@sabaki/crdt-gametree')
 
-let tree = new GameTree()
+let tree1 = new GameTree()
+let tree2 = new GameTree({root: tree1.root})
 
-let newTree1 = tree.mutate(draft => {
+let newTree1 = tree1.mutate(draft => {
     let id1 = draft.appendNode(draft.root.id, {B: ['dd']})
     let id2 = draft.appendNode(id1, {W: ['dq']})
 
     draft.addToProperty(id2, 'W', 'qd')
 })
 
-let newTree2 = tree.mutate(draft => {
+let newTree2 = tree2.mutate(draft => {
     draft.addProperty(draft.root.id, 'AB', ['dd'])
     draft.appendNode(draft.root.id, {W: ['dp']})
 })
