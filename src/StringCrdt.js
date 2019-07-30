@@ -51,22 +51,26 @@ class StringCrdt {
             // Look for index with binary search
 
             let startIndex = 0
-            let endIndex = this.data.length - 1
+            let endIndex = this.data.length
+            let found = null
 
-            while (startIndex <= endIndex) {
+            while (endIndex - startIndex >= 1) {
                 let index = Math.floor(startIndex + (endIndex - startIndex) / 2)
                 let compare = compareId(id, this.data[index].id)
 
                 this._idMapCache[stringify(this.data[index].id)] = index
 
                 if (compare < 0) {
-                    endIndex = index - 1
+                    endIndex = index
                 } else if (compare > 0) {
                     startIndex = index + 1
                 } else {
+                    found = index
                     break
                 }
             }
+
+            this._idMapCache[key] = found != null ? found : endIndex
         }
 
         return this._idMapCache[key]
@@ -87,15 +91,18 @@ class StringCrdt {
 
         insertions.sort(({at: x}, {at: y}) => x == null ? 1 : y == null ? -1 : compareId(x, y))
 
-        for (let {at: id2, insert} of insertions) {
+        for (let insertion of insertions) {
+            let {at: id2, insert, ids} = insertion
             let index2 = id2 == null ? this.data.length + 1 : this._getIndexFromId(id2)
             let char1 = this.data[index2 - 1]
             let id1 = char1 == null ? null : char1.id
 
-            let newIds = insert.reduce((ids, value, i) => {
+            let newIds = ids != null ? ids : insert.reduce((ids, value, i) => {
                 ids.push(this._getIdBetween(ids[i - 1] || id1, id2))
                 return ids
             }, [])
+
+            insertion.ids = newIds
 
             newData.splice(index2 + offset, 0, ...insert.map((value, i) => ({
                 id: newIds[i],
