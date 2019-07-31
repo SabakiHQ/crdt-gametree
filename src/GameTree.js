@@ -4,6 +4,7 @@ const DraftProxy = require('./DraftProxy')
 const StringCrdt = require('./StringCrdt')
 const ImmutableSortedSet = require('./ImmutableSortedSet')
 
+const rootId = '02JXJgZ01FqtDf03fvq9F00qN3m7'
 const inheritedMethods = [
     'get', 'getSequence', 'navigate',
     'listNodes', 'listNodesHorizontally', 'listNodesVertically',
@@ -14,12 +15,14 @@ const inheritedMethods = [
 ]
 
 class GameTree {
-    constructor({id = null, getId = null, merger, root, textProperties = []} = {}) {
+    constructor({id, getId, merger, root, textProperties = []} = {}) {
         this.id = id == null ? uuid() : id
         this.timestamp = 0
-        this.getId = getId || ((counter = 0) => () =>
-            [encodeNumber(++counter), this.id].join('-')
-        )()
+        this.getId = getId || (i => () => [encodeNumber(++i), this.id].join('-'))(0)
+
+        if (root == null) {
+            root = {id: rootId, data: {}, parentId: null, children: []}
+        }
 
         this.base = new ImmutableGameTree({getId: this.getId, merger, root})
         this.merger = this.base.merger
@@ -156,13 +159,13 @@ class GameTree {
         let result = new GameTree({
             id: this.id,
             getId: this.getId,
+            merger: this.merger,
             textProperties: this.textProperties
         })
 
         Object.assign(result, {
             timestamp,
             base: this.base,
-            merger: snapshot.merger,
             root: snapshot.root,
             _history: newHistory,
             _createdFrom: this,
@@ -187,6 +190,7 @@ class GameTree {
         let result = new GameTree({
             id: this.id,
             getId: this.getId,
+            merger: this.merger,
             textProperties: this.textProperties
         })
 
@@ -196,7 +200,6 @@ class GameTree {
         Object.assign(result, {
             timestamp: draftProxy.timestamp,
             base: this.base,
-            merger: newTree.merger,
             root: newTree.root,
             _createdFrom: this,
             _changes: draftProxy.changes,
