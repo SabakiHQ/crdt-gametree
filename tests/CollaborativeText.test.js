@@ -1,18 +1,18 @@
 const t = require('tap')
-const StringCrdt = require('../src/StringCrdt')
+const CollaborativeText = require('../src/CollaborativeText')
 
 t.test('constructor', async t => {
-    let str1 = new StringCrdt(1)
+    let str1 = new CollaborativeText(1)
 
     t.equal(str1.valueOf(), '')
 
-    let str2 = new StringCrdt(1, 'Hello World!')
+    let str2 = new CollaborativeText(1, 'Hello World!')
 
     t.equal(str2.valueOf(), 'Hello World!')
 })
 
 t.test('delete', async t => {
-    let str = new StringCrdt(1, 'Helllo Worrld!')
+    let str = new CollaborativeText(1, 'Helllo Worrld!')
     let ids = [2, 10].map(i => str.getIdFromIndex(i))
     let str2 = str.applyChange({deletions: ids})
 
@@ -20,7 +20,7 @@ t.test('delete', async t => {
 })
 
 t.test('insert', async t => {
-    let str = new StringCrdt(1, 'Helo World!')
+    let str = new CollaborativeText(1, 'Helo World!')
     let str2 = str.applyChange({insertions: [
         {
             at: str.getIdFromIndex(3),
@@ -40,7 +40,7 @@ t.test('insert', async t => {
 })
 
 t.test('multi level insert', async t => {
-    let str = new StringCrdt(1, 'Hello World!')
+    let str = new CollaborativeText(1, 'Hello World!')
     let str2 = str.applyChange({insertions: [
         {
             at: str.getIdFromIndex(str.valueOf().indexOf('W')),
@@ -61,7 +61,7 @@ t.test('multi level insert', async t => {
 })
 
 t.test('delete and insert', async t => {
-    let str = new StringCrdt(1, 'Hwlllo World!')
+    let str = new CollaborativeText(1, 'Hwlllo World!')
     let str2 = str.applyChange({
         deletions: [1, 2].map(i => str.getIdFromIndex(i)),
         insertions: [
@@ -82,8 +82,8 @@ t.test('delete and insert', async t => {
 t.test('conflict-free', async t => {
     let initChange = {insertions: [{at: null, insert: [...'hlllo world']}]}
 
-    let str1 = new StringCrdt(1).applyChange(initChange)
-    let str2 = new StringCrdt(2).applyChange(initChange)
+    let str1 = new CollaborativeText(1).applyChange(initChange)
+    let str2 = new CollaborativeText(2).applyChange(initChange)
 
     let change1 = {
         deletions: [str1.getIdFromIndex(1)],

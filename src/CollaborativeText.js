@@ -3,7 +3,7 @@ const {compareLexically} = require('./helper')
 const compareId = compareLexically(compareLexically())
 const equalsId = id1 => id2 => compareId(id1, id2) === 0
 
-class StringCrdt {
+class CollaborativeText {
     constructor(id, initString = '') {
         let characters = Array.from(initString)
 
@@ -134,7 +134,7 @@ class StringCrdt {
             newData = newData.filter(({id}) => !deletions.some(equalsId(id)))
         }
 
-        let result = new StringCrdt(this.id)
+        let result = new CollaborativeText(this.id)
         result.data = newData
 
         return result
@@ -153,4 +153,4 @@ class StringCrdt {
     }
 }
 
-module.exports = StringCrdt
+module.exports = CollaborativeText

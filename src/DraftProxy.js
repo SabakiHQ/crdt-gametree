@@ -1,13 +1,13 @@
-const StringCrdt = require('./StringCrdt')
+const CollaborativeText = require('./CollaborativeText')
 const {diffArray, encodeNumber, wrapProperties} = require('./helper')
 
-const incompatibleTextOperationMethods = [
+const nonCollaborativeTextOperationMethods = [
     'updateProperty', 'addToProperty', 'removeFromProperty'
 ]
 
 const operationMethods = [
     'appendNode', 'removeNode', 'shiftNode', 'makeRoot',
-    'removeProperty', ...incompatibleTextOperationMethods
+    'removeProperty', ...nonCollaborativeTextOperationMethods
 ]
 
 const unsafeOperationMethods = [
@@ -18,7 +18,7 @@ class DraftProxy {
     constructor(base, draft) {
         this.id = base.id
         this.timestamp = base.timestamp
-        this.textProperties = base.textProperties
+        this.collaborativeTextProperties = base.collaborativeTextProperties
         this.draft = draft
         this.root = draft.root
         this.changes = []
@@ -52,10 +52,10 @@ class DraftProxy {
 
     _callInheritedMethod(operation, args) {
         if (
-            incompatibleTextOperationMethods.includes(operation)
-            && this.textProperties.includes(args[1])
+            nonCollaborativeTextOperationMethods.includes(operation)
+            && this.collaborativeTextProperties.includes(args[1])
         ) {
-            throw new Error(`Properties specified in 'textProperties' is incompatible with '${operation}'`)
+            throw new Error(`Properties specified in 'collaborativeTextProperties' is incompatible with '${operation}'`)
         }
 
         let plainArgs = args
@@ -65,8 +65,8 @@ class DraftProxy {
                 plainArgs[0],
                 wrapProperties(
                     plainArgs[1],
-                    this.textProperties,
-                    x => new StringCrdt(this.id, x)
+                    this.collaborativeTextProperties,
+                    x => new CollaborativeText(this.id, x)
                 ),
                 ...plainArgs.slice(2)
             ]
@@ -90,26 +90,32 @@ class DraftProxy {
         return ret
     }
 
-    _getTextProperty(id, property) {
-        if (!this.textProperties.includes(property)) {
-            throw new Error(`Property has to be specified in 'textProperties'`)
+    _getCollaborativeTextProperty(id, property) {
+        if (!this.collaborativeTextProperties.includes(property)) {
+            throw new Error(`Property has to be specified in 'collaborativeTextProperties'`)
         }
 
         let node = this.get(id)
         if (node == null) return
 
         if (node.data[property] == null) {
-            node.data[property] = [new StringCrdt(this.id)]
+            node.data[property] = ['']
         }
+
+        node.data = wrapProperties(
+            node.data,
+            this.collaborativeTextProperties,
+            x => x instanceof CollaborativeText ? x : new CollaborativeText(this.id, x)
+        )
 
         return node.data[property][0]
     }
 
-    updateTextProperty(id, property, value) {
+    updateCollaborativeTextProperty(id, property, value) {
         let node = this.get(id)
         if (node == null) return false
 
-        let crdt = this._getTextProperty(id, property)
+        let crdt = this._getCollaborativeTextProperty(id, property)
         let {deletions = [], insertions = []} = typeof value !== 'string'
             ? value
             : diffArray(crdt.valueOf(), value)
@@ -122,15 +128,15 @@ class DraftProxy {
             }))
         }
 
-        return this._updateTextProperty(id, property, change)
+        return this._updateCollaborativeTextProperty(id, property, change)
     }
 
-    _updateTextProperty(id, property, change) {
+    _updateCollaborativeTextProperty(id, property, change) {
         let inner = () => {
             let node = this.get(id)
             if (node == null) return false
 
-            let crdt = this._getTextProperty(id, property)
+            let crdt = this._getCollaborativeTextProperty(id, property)
             node.data[property] = [crdt.applyChange(change)]
 
             return true
@@ -140,7 +146,7 @@ class DraftProxy {
 
         this.changes.push({
             id: this._createId(),
-            operation: '_updateTextProperty',
+            operation: '_updateCollaborativeTextProperty',
             args: [id, property, change],
             ret,
             author: this.id,

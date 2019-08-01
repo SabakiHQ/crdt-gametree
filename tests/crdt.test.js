@@ -246,7 +246,7 @@ t.test('do not allow unsafe mutations', async t => {
 })
 
 t.test('text properties cannot be normally updated, added, or removed from', async t => {
-    let tree = new GameTree({textProperties: ['C']})
+    let tree = new GameTree({collaborativeTextProperties: ['C']})
 
     t.throws(() => {
         tree.mutate(draft => {
@@ -268,22 +268,22 @@ t.test('text properties cannot be normally updated, added, or removed from', asy
 })
 
 t.test('text property updates should be conflict-free', async t => {
-    let textProperties = ['C']
+    let collaborativeTextProperties = ['C']
 
     let id
-    let tree1 = new GameTree({textProperties}).mutate(draft => {
+    let tree1 = new GameTree({collaborativeTextProperties}).mutate(draft => {
         id = draft.appendNode(draft.root.id, {C: ['hlllo world']})
     })
-    let tree2 = new GameTree({textProperties}).applyChanges(tree1.getChanges())
+    let tree2 = new GameTree({collaborativeTextProperties}).applyChanges(tree1.getChanges())
 
     let newTree1 = tree1.mutate(draft => {
-        draft.updateTextProperty(id, 'C', {
+        draft.updateCollaborativeTextProperty(id, 'C', {
             deletions: [1],
             insertions: [{at: 1, insert: ['e']}]
         })
     })
     let newTree2 = tree2.mutate(draft => {
-        draft.updateTextProperty(id, 'C', {
+        draft.updateCollaborativeTextProperty(id, 'C', {
             deletions: [3],
             insertions: [{at: 5, insert: [...' cruel']}, {at: 11, insert: ['!']}]
         })
@@ -297,19 +297,19 @@ t.test('text property updates should be conflict-free', async t => {
 })
 
 t.test('auto diffed text property updates should be conflict-free', async t => {
-    let textProperties = ['C']
+    let collaborativeTextProperties = ['C']
 
     let id
-    let tree1 = new GameTree({textProperties}).mutate(draft => {
+    let tree1 = new GameTree({collaborativeTextProperties}).mutate(draft => {
         id = draft.appendNode(draft.root.id, {C: ['hlllo world']})
     })
-    let tree2 = new GameTree({textProperties}).applyChanges(tree1.getChanges())
+    let tree2 = new GameTree({collaborativeTextProperties}).applyChanges(tree1.getChanges())
 
     let newTree1 = tree1.mutate(draft => {
-        draft.updateTextProperty(id, 'C', 'hello world')
+        draft.updateCollaborativeTextProperty(id, 'C', 'hello world')
     })
     let newTree2 = tree2.mutate(draft => {
-        draft.updateTextProperty(id, 'C', 'hllo cruel world!')
+        draft.updateCollaborativeTextProperty(id, 'C', 'hllo cruel world!')
     })
 
     t.equal(newTree1.get(id).data.C[0].valueOf(), 'hello world')
@@ -322,22 +322,22 @@ t.test('auto diffed text property updates should be conflict-free', async t => {
 })
 
 t.test('text property inserts should be continuous for given author', async t => {
-    let textProperties = ['C']
+    let collaborativeTextProperties = ['C']
 
     let id
     let value = 'Hello World'
-    let tree1 = new GameTree({textProperties}).mutate(draft => {
+    let tree1 = new GameTree({collaborativeTextProperties}).mutate(draft => {
         id = draft.appendNode(draft.root.id, {C: [value]})
     })
-    let tree2 = new GameTree({textProperties}).applyChanges(tree1.getChanges())
+    let tree2 = new GameTree({collaborativeTextProperties}).applyChanges(tree1.getChanges())
 
     let newTree1 = tree1.mutate(draft => {
-        draft.updateTextProperty(id, 'C', {
+        draft.updateCollaborativeTextProperty(id, 'C', {
             insertions: [{at: value.length, insert: [...', Yichuan']}]
         })
     })
     let newTree2 = tree2.mutate(draft => {
-        draft.updateTextProperty(id, 'C', {
+        draft.updateCollaborativeTextProperty(id, 'C', {
             insertions: [{at: value.length, insert: [...', David']}]
         })
     })

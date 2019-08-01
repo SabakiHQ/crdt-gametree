@@ -1,8 +1,8 @@
 const ImmutableGameTree = require('@sabaki/immutable-gametree')
-const {encodeNumber, uuid, compareChange, sanitizeChange, wrapProperties} = require('./helper')
+const CollaborativeText = require('./CollaborativeText')
 const DraftProxy = require('./DraftProxy')
-const StringCrdt = require('./StringCrdt')
 const ImmutableSortedSet = require('./ImmutableSortedSet')
+const {encodeNumber, uuid, compareChange, sanitizeChange, wrapProperties} = require('./helper')
 
 const rootId = '02JXJgZ01FqtDf03fvq9F00qN3m7'
 const inheritedMethods = [
@@ -15,7 +15,7 @@ const inheritedMethods = [
 ]
 
 class GameTree {
-    constructor({id, getId, merger, root, textProperties = []} = {}) {
+    constructor({id, getId, merger, root, collaborativeTextProperties = []} = {}) {
         this.id = id == null ? uuid() : id
         this.timestamp = 0
         this.getId = getId || (i => () => [encodeNumber(++i), this.id].join('-'))(0)
@@ -29,7 +29,7 @@ class GameTree {
         this.base = new ImmutableGameTree({getId: this.getId, merger, root})
         this.merger = this.base.merger
         this.root = this.base.root
-        this.textProperties = textProperties
+        this.collaborativeTextProperties = collaborativeTextProperties
 
         this._createdFrom = null
         this._changes = []
@@ -125,23 +125,27 @@ class GameTree {
             for (let i = changesOnBase.length - 1; i >= 0; i--) {
                 let {operation, args, ret} = changesOnBase[i]
 
-                if (operation === 'appendNode') {
-                    draft.UNSAFE_appendNodeWithId(
-                        args[0],
-                        ret,
-                        wrapProperties(
-                            args[1],
-                            this.textProperties,
-                            x => new StringCrdt(this.id, x)
-                        ),
-                        ...args.slice(2)
-                    )
-                } else if (operation.includes('UNSAFE_')) {
-                    // Unsafe changes are not supported
-                } else if (operation in draft) {
-                    draft[operation](...args)
-                } else if (operation === '_updateTextProperty') {
-                    draftProxy._updateTextProperty(...args)
+                try {
+                    if (operation === 'appendNode') {
+                        draft.UNSAFE_appendNodeWithId(
+                            args[0],
+                            ret,
+                            wrapProperties(
+                                args[1],
+                                this.collaborativeTextProperties,
+                                x => new CollaborativeText(this.id, x)
+                            ),
+                            ...args.slice(2)
+                        )
+                    } else if (operation.includes('UNSAFE_')) {
+                        // Unsafe changes are not supported
+                    } else if (operation in draft) {
+                        draft[operation](...args)
+                    } else if (operation === '_updateCollaborativeTextProperty') {
+                        draftProxy._updateCollaborativeTextProperty(...args)
+                    }
+                } catch (err) {
+                    // Ignore
                 }
             }
         })
@@ -162,7 +166,7 @@ class GameTree {
             id: this.id,
             getId: this.getId,
             merger: this.merger,
-            textProperties: this.textProperties
+            collaborativeTextProperties: this.collaborativeTextProperties
         })
 
         Object.assign(result, {
@@ -193,7 +197,7 @@ class GameTree {
             id: this.id,
             getId: this.getId,
             merger: this.merger,
-            textProperties: this.textProperties
+            collaborativeTextProperties: this.collaborativeTextProperties
         })
 
         let newHistory = this._history.push(draftProxy.changes)
