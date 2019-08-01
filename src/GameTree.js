@@ -216,7 +216,7 @@ class GameTree {
     }
 
     reset(changeId = null) {
-        let timestamp = ++this.timestamp
+        let timestamp = this.timestamp + 1
 
         return this.applyChanges([
             {
