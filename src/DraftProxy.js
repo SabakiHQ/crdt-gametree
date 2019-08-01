@@ -1,5 +1,5 @@
 const CollaborativeText = require('./CollaborativeText')
-const {diffArray, encodeNumber, wrapProperties} = require('./helper')
+const {diffString, encodeNumber, wrapProperties} = require('./helper')
 
 const nonCollaborativeTextOperationMethods = [
     'updateProperty', 'addToProperty', 'removeFromProperty'
@@ -14,7 +14,7 @@ const unsafeOperationMethods = [
     'UNSAFE_appendNodeWithId'
 ]
 
-class DraftProxy {
+class Draft {
     constructor(base, draft) {
         this.id = base.id
         this.timestamp = base.timestamp
@@ -118,7 +118,7 @@ class DraftProxy {
         let crdt = this._getCollaborativeTextProperty(id, property)
         let {deletions = [], insertions = []} = typeof value !== 'string'
             ? value
-            : diffArray(crdt.valueOf(), value)
+            : diffString(crdt.valueOf(), value)
 
         let change = {
             deletions: deletions.map(i => crdt.getIdFromIndex(i)),
@@ -132,17 +132,14 @@ class DraftProxy {
     }
 
     _updateCollaborativeTextProperty(id, property, change) {
-        let inner = () => {
-            let node = this.get(id)
-            if (node == null) return false
+        let ret = false
+        let node = this.get(id)
 
+        if (node != null) {
             let crdt = this._getCollaborativeTextProperty(id, property)
             node.data[property] = [crdt.applyChange(change)]
-
-            return true
+            ret = true
         }
-
-        let ret = inner()
 
         this.changes.push({
             id: this._createId(),
@@ -158,4 +155,4 @@ class DraftProxy {
     }
 }
 
-module.exports = DraftProxy
+module.exports = Draft

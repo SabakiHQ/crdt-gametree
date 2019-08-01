@@ -67,25 +67,28 @@ exports.wrapProperties = (data, properties, fn) => {
     }, {})
 }
 
-exports.diffArray = (fromArr, toArr, fromStart = 0, toStart = 0) => {
-    if (toStart >= toArr.length && fromStart >= fromArr.length) {
+exports.diffString = (from, to, fromStart = 0, toStart = 0) => {
+    from = Array.from(from)
+    to = Array.from(to)
+
+    if (toStart >= to.length && fromStart >= from.length) {
         return {deletions: [], insertions: []}
-    } else if (toStart >= toArr.length) {
+    } else if (toStart >= to.length) {
         return {
-            deletions: [...Array(fromArr.length - fromStart)].map((_, i) => fromStart + i),
+            deletions: [...Array(from.length - fromStart)].map((_, i) => fromStart + i),
             insertions: []
         }
-    } else if (fromStart >= fromArr.length) {
+    } else if (fromStart >= from.length) {
         return {
             deletions: [],
-            insertions: [{at: fromStart, insert: [...toArr.slice(toStart)]}],
+            insertions: [{at: fromStart, insert: to.slice(toStart).join('')}],
         }
-    } else if (fromArr[fromStart] === toArr[toStart]) {
-        return exports.diffArray(fromArr, toArr, fromStart + 1, toStart + 1)
+    } else if (from[fromStart] === to[toStart]) {
+        return exports.diffString(from, to, fromStart + 1, toStart + 1)
     }
 
-    let deletionResult = exports.diffArray(fromArr, toArr, fromStart + 1, toStart)
-    let insertionResult = exports.diffArray(fromArr, toArr, fromStart, toStart + 1)
+    let deletionResult = exports.diffString(from, to, fromStart + 1, toStart)
+    let insertionResult = exports.diffString(from, to, fromStart, toStart + 1)
     let complexity = changes => changes.deletions.length
         + changes.insertions.reduce((sum, {insert}) => sum + insert.length, 0)
 
@@ -94,9 +97,9 @@ exports.diffArray = (fromArr, toArr, fromStart = 0, toStart = 0) => {
         return deletionResult
     } else {
         if (insertionResult.insertions.length > 0 && insertionResult.insertions[0].at === fromStart) {
-            insertionResult.insertions[0].insert.unshift(toArr[toStart])
+            insertionResult.insertions[0].insert = to[toStart] + insertionResult.insertions[0].insert
         } else {
-            insertionResult.insertions.unshift({at: fromStart, insert: [toArr[toStart]]})
+            insertionResult.insertions.unshift({at: fromStart, insert: to[toStart]})
         }
 
         return insertionResult

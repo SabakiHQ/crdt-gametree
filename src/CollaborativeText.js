@@ -106,6 +106,8 @@ class CollaborativeText {
 
             if (insert.length === 0) continue
 
+            insert = [...insert]
+
             if (ids == null) {
                 let id2 = insertion.at
                 let index2 = id2 == null ? this.data.length : this._getIndexFromId(id2)

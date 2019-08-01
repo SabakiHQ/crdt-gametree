@@ -24,15 +24,15 @@ t.test('insert', async t => {
     let str2 = str.applyChange({insertions: [
         {
             at: str.getIdFromIndex(3),
-            insert: ['l']
+            insert: 'l'
         },
         {
             at: null,
-            insert: [...' How are you?']
+            insert: ' How are you?'
         },
         {
             at: str.getIdFromIndex(str.valueOf().indexOf('!')),
-            insert: [...', Yichuan']
+            insert: ', Yichuan'
         }
     ]})
 
@@ -44,7 +44,7 @@ t.test('multi level insert', async t => {
     let str2 = str.applyChange({insertions: [
         {
             at: str.getIdFromIndex(str.valueOf().indexOf('W')),
-            insert: [...'cruel ']
+            insert: 'cruel '
         }
     ]})
 
@@ -53,7 +53,7 @@ t.test('multi level insert', async t => {
     let str3 = str2.applyChange({insertions: [
         {
             at: str2.getIdFromIndex(str2.valueOf().indexOf('uel')),
-            insert: [...'ime-filled and cr']
+            insert: 'ime-filled and cr'
         }
     ]})
 
@@ -67,11 +67,11 @@ t.test('delete and insert', async t => {
         insertions: [
             {
                 at: str.getIdFromIndex(2),
-                insert: ['e']
+                insert: 'e'
             },
             {
                 at: str.getIdFromIndex(str.valueOf().indexOf('!')),
-                insert: [...', Yichuan']
+                insert: ', Yichuan'
             }
         ]
     })
@@ -80,14 +80,14 @@ t.test('delete and insert', async t => {
 })
 
 t.test('conflict-free', async t => {
-    let initChange = {insertions: [{at: null, insert: [...'hlllo world']}]}
+    let initChange = {insertions: [{at: null, insert: 'hlllo world'}]}
 
     let str1 = new CollaborativeText(1).applyChange(initChange)
     let str2 = new CollaborativeText(2).applyChange(initChange)
 
     let change1 = {
         deletions: [str1.getIdFromIndex(1)],
-        insertions: [{at: str1.getIdFromIndex(1), insert: ['e']}]
+        insertions: [{at: str1.getIdFromIndex(1), insert: 'e'}]
     }
 
     let fix1 = str1.applyChange(change1)
@@ -99,11 +99,11 @@ t.test('conflict-free', async t => {
         insertions: [
             {
                 at: str2.getIdFromIndex(str2.valueOf().indexOf('w')),
-                insert: [...'cruel ']
+                insert: 'cruel '
             },
             {
                 at: null,
-                insert: ['!']
+                insert: '!'
             }
         ]
     }

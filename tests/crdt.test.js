@@ -279,13 +279,13 @@ t.test('text property updates should be conflict-free', async t => {
     let newTree1 = tree1.mutate(draft => {
         draft.updateCollaborativeTextProperty(id, 'C', {
             deletions: [1],
-            insertions: [{at: 1, insert: ['e']}]
+            insertions: [{at: 1, insert: 'e'}]
         })
     })
     let newTree2 = tree2.mutate(draft => {
         draft.updateCollaborativeTextProperty(id, 'C', {
             deletions: [3],
-            insertions: [{at: 5, insert: [...' cruel']}, {at: 11, insert: ['!']}]
+            insertions: [{at: 5, insert: ' cruel'}, {at: 11, insert: '!'}]
         })
     })
 
@@ -333,12 +333,12 @@ t.test('text property inserts should be continuous for given author', async t =>
 
     let newTree1 = tree1.mutate(draft => {
         draft.updateCollaborativeTextProperty(id, 'C', {
-            insertions: [{at: value.length, insert: [...', Yichuan']}]
+            insertions: [{at: value.length, insert: ', Yichuan'}]
         })
     })
     let newTree2 = tree2.mutate(draft => {
         draft.updateCollaborativeTextProperty(id, 'C', {
-            insertions: [{at: value.length, insert: [...', David']}]
+            insertions: [{at: value.length, insert: ', David'}]
         })
     })
 
