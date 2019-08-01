@@ -1,6 +1,6 @@
-# crdt-gametree [![Build Status](https://travis-ci.org/SabakiHQ/crdt-gametree.svg?branch=master)](https://travis-ci.org/SabakiHQ/crdt-gametree)
+# @sabaki/crdt-gametree [![Build Status](https://travis-ci.org/SabakiHQ/crdt-gametree.svg?branch=master)](https://travis-ci.org/SabakiHQ/crdt-gametree)
 
-WIP: An immutable, conflict-free replicated game tree data type.
+An immutable, conflict-free replicated game tree data type.
 
 ## Installation
 
@@ -48,9 +48,9 @@ console.log(JSON.stringify(mergedTree1.root) === JSON.stringify(mergedTree2.root
 
 ## API
 
-This library is based upon and is completely compatible with [@sabaki/immutable-gametree](https://github.com/SabakiHQ/immutable-gametree). Nearly all properties, functions, and behavior that @sabaki/immutable-gametree exports you can expect in this library as well.
+This library is based upon and is completely compatible with [@sabaki/immutable-gametree](https://github.com/SabakiHQ/immutable-gametree). Nearly all properties, functions, and behavior that [@sabaki/immutable-gametree](https://github.com/SabakiHQ/immutable-gametree) exports you can expect in this library as well.
 
-We will only point out subtle differences and additional functions in this library. Please consult the [@sabaki/immutable-gametree documentation](https://github.com/SabakiHQ/immutable-gametree#api) for a full overview of the functionalities.
+We will only point out subtle differences and additional functions in this document. Please consult the [@sabaki/immutable-gametree documentation](https://github.com/SabakiHQ/immutable-gametree#api) for a full overview of the functionalities.
 
 ---
 
@@ -77,13 +77,13 @@ Adding and removing values to or from properties are merged when happening simul
 
 That means if two users update a single property value simultaneously, only the changes of one user will be reflected in the game tree eventually. The changes of the other user will be discarded.
 
-To allow collaborative editing for certain cases, you can specify certain properties as *collaborative text properties*. These properties can only contain one value, a [`CollaborativeText`](#class-collaborativetext) class which contains the string.
+To allow collaborative editing for certain cases, you can specify certain properties as *collaborative text properties*. These properties can only contain one value, a `CollaborativeText` class which contains the string.
 
 Updates to a collaborative text property made by multiple users will be merged consistently in the end.
 
 ### Change Object
 
-Every mutation change made to a `GameTree` will be recorded inside a change object:
+Every mutation operation made to a `GameTree` draft will be represented by a change object:
 
 ~~~js
 {
@@ -107,7 +107,7 @@ Every mutation change made to a `GameTree` will be recorded inside a change obje
 - `options` `<Object>` *(optional)*
     - `id` `<Primitive>` *(optional)* - A unique author id. Default: A random UUID
     - `collaborativeTextProperties` `<Array<String>>` *(optional)* - An array of property identifiers that are [collaborative text properties](#collaborative-text-properties)
-    - See [@sabaki/immutable-gametree](https://github.com/SabakiHQ/immutable-gametree#new-gametreeoptions)
+    - See [@sabaki/immutable-gametree `GameTree`](https://github.com/SabakiHQ/immutable-gametree#new-gametreeoptions)
         - `getId` `<Function>` *(optional)* - If you specify this function, you have to make sure it generates globally unique ids, not just locally unique ones.
 
 #### `tree.timestamp`
@@ -124,13 +124,13 @@ A generator function that yields all [changes](#change-object) made to the tree 
 
 #### `tree.getHistory()`
 
-Returns an array of [change objects](#change-object) that reflects all the changes made to the tree since initialization in logical order.
+Returns an array of [change objects](#change-object) that consists of all the changes made to the tree since initialization in logical order.
 
 #### `tree.getChanges([oldTree])`
 
 - `oldTree` [`<GameTree>`](#class-gametree) *(optional)*
 
-Compares the history of `tree` and `oldTree` and returns an array of [changes](#change-object) that are missing in `tree`.
+Compares the history of `tree` and `oldTree` and returns an array of [changes](#change-object) that are missing in `tree` in logical order.
 
 `oldTree` defaults to the game tree we mutated from.
 
@@ -138,7 +138,7 @@ Compares the history of `tree` and `oldTree` and returns an array of [changes](#
 
 - `changes` [`<Array<Change>>`](#change-object)
 
-Returns a new `GameTree` instance that applies the given `changes` to the current `tree`.
+Returns a new `GameTree` instance that applies the given `changes` to the current `tree`. Note that `changes` has to be in logical order for the merge to happen correctly.
 
 #### `tree.reset([changeId])`
 
@@ -154,7 +154,7 @@ This operation does not destroy the previous history.
 
 ### `class Draft`
 
-#### Differences to @sabaki/immutable-gametree
+#### Differences to [@sabaki/immutable-gametree `Draft`](https://github.com/SabakiHQ/immutable-gametree#class-draft)
 
 - Functions prefixed with `UNSAFE_` will throw errors.
 - `updateProperty`, `addToProperty`, `removeFromProperty` will throw errors for [collaborative text properties](#collaborative-text-properties).
@@ -203,4 +203,4 @@ For example, applying the following collaborative text change object to `"Hello 
 }
 ~~~
 
-will result in `"Hello cruel world. How are you?"`. If you specify a string as `change`, we will automatically generate a minimal collaborative text change object in the background.
+will result in `"Hello cruel world. How are you?"`. If you specify a string as `change`, we will perform a diff between the old string and the new one, and automatically generate a minimal collaborative text change object for you in the background.
