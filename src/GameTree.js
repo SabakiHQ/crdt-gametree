@@ -22,6 +22,8 @@ class GameTree {
 
         if (root == null) {
             root = {id: rootId, data: {}, parentId: null, children: []}
+        } else if (root.id == null) {
+            root.id = rootId
         }
 
         this.base = new ImmutableGameTree({getId: this.getId, merger, root})
