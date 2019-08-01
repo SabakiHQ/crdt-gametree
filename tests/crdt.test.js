@@ -215,26 +215,26 @@ t.test('reset method', async t => {
     t.strictEqual(tree.getHeight(), 3)
 
     let changes = tree.getChanges()
-    let emptyTree = tree.reset()
     let newTree = tree.reset(changes[0].id)
-
-    t.strictEqual(emptyTree.getHeight(), 1)
-    t.strictEqual(emptyTree.get(second), null)
-    t.strictEqual(emptyTree.getHistory().length, 3)
-    t.strictEqual(emptyTree.getChanges().length, 1)
+    let emptyTree = newTree.reset()
 
     t.strictEqual(newTree.getHeight(), 2)
     t.strictEqual(newTree.get(second), null)
     t.strictEqual(newTree.getHistory().length, 3)
     t.strictEqual(newTree.getChanges().length, 1)
-    t.strictEqual(newTree.getChanges(emptyTree).length, 1)
+
+    t.strictEqual(emptyTree.getHeight(), 1)
+    t.strictEqual(emptyTree.get(second), null)
+    t.strictEqual(emptyTree.getHistory().length, 4)
+    t.strictEqual(emptyTree.getChanges().length, 1)
+    t.strictEqual(emptyTree.getChanges(tree).length, 2)
 
     let newTree2 = emptyTree.mutate(draft => {
         draft.appendNode(draft.root.id, {B: ['dd']})
     })
 
     t.strictEqual(newTree2.getHeight(), 2)
-    t.strictEqual(newTree2.getHistory().length, 4)
+    t.strictEqual(newTree2.getHistory().length, 5)
 })
 
 t.test('do not allow unsafe mutations', async t => {
