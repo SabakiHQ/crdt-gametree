@@ -43,6 +43,9 @@ class StringCrdt {
     _getIdsBetween(id1, id2, length) {
         let id = this._getIdBetween(id1, id2)
 
+        if (length === 0) return []
+        if (length === 1) return [id]
+
         return [...Array(length)].map((_, i) =>
             [...id.slice(0, -1), [...id.slice(-1)[0], i]]
         )

@@ -296,6 +296,31 @@ t.test('text property updates should be conflict-free', async t => {
     t.equal(merged1.get(id).data.C[0].valueOf(), merged2.get(id).data.C[0].valueOf())
 })
 
+t.test('auto diffed text property updates should be conflict-free', async t => {
+    let textProperties = ['C']
+
+    let id
+    let tree1 = new GameTree({textProperties}).mutate(draft => {
+        id = draft.appendNode(draft.root.id, {C: ['hlllo world']})
+    })
+    let tree2 = new GameTree({textProperties}).applyChanges(tree1.getChanges())
+
+    let newTree1 = tree1.mutate(draft => {
+        draft.updateTextProperty(id, 'C', 'hello world')
+    })
+    let newTree2 = tree2.mutate(draft => {
+        draft.updateTextProperty(id, 'C', 'hllo cruel world!')
+    })
+
+    t.equal(newTree1.get(id).data.C[0].valueOf(), 'hello world')
+    t.equal(newTree2.get(id).data.C[0].valueOf(), 'hllo cruel world!')
+
+    let merged1 = newTree1.applyChanges(newTree2.getChanges())
+    let merged2 = newTree2.applyChanges(newTree1.getChanges())
+
+    t.equal(merged1.get(id).data.C[0].valueOf(), merged2.get(id).data.C[0].valueOf())
+})
+
 t.test('text property inserts should be continuous for given author', async t => {
     let textProperties = ['C']
 

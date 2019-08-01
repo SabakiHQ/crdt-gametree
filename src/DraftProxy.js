@@ -105,11 +105,14 @@ class DraftProxy {
         return node.data[property][0]
     }
 
-    updateTextProperty(id, property, {deletions = [], insertions = []}) {
+    updateTextProperty(id, property, value) {
         let node = this.get(id)
         if (node == null) return false
 
         let crdt = this._getTextProperty(id, property)
+        let {deletions = [], insertions = []} = typeof value !== 'string'
+            ? value
+            : diffArray(crdt.valueOf(), value)
 
         let change = {
             deletions: deletions.map(i => crdt.getIdFromIndex(i)),
