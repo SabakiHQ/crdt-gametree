@@ -18,7 +18,7 @@ class Draft {
     constructor(base, draft) {
         this.id = base.id
         this.timestamp = base.timestamp
-        this.collaborativeTextProperties = base.collaborativeTextProperties
+        this.base = base
         this.draft = draft
         this.root = draft.root
         this.changes = []
@@ -46,14 +46,10 @@ class Draft {
         return result
     }
 
-    _createId() {
-        return [encodeNumber(++this.timestamp), this.id].join('-')
-    }
-
     _callInheritedMethod(operation, args) {
         if (
             nonCollaborativeTextOperationMethods.includes(operation)
-            && this.collaborativeTextProperties.includes(args[1])
+            && this.base.collaborativeTextProperties.includes(args[1])
         ) {
             throw new Error(`Properties specified in 'collaborativeTextProperties' is incompatible with '${operation}'`)
         }
@@ -65,7 +61,7 @@ class Draft {
                 plainArgs[0],
                 wrapProperties(
                     plainArgs[1],
-                    this.collaborativeTextProperties,
+                    this.base.collaborativeTextProperties,
                     x => new CollaborativeText(this.id, x)
                 ),
                 ...plainArgs.slice(2)
@@ -78,19 +74,19 @@ class Draft {
 
         this.root = this.draft.root
         this.changes.push({
-            id: this._createId(),
+            id: this.base.getId(),
             operation,
             args: plainArgs,
             ret,
             author: this.id,
-            timestamp: this.timestamp
+            timestamp: ++this.timestamp
         })
 
         return ret
     }
 
     _getCollaborativeTextProperty(id, property) {
-        if (!this.collaborativeTextProperties.includes(property)) {
+        if (!this.base.collaborativeTextProperties.includes(property)) {
             throw new Error(`Property has to be specified in 'collaborativeTextProperties'`)
         }
 
@@ -103,7 +99,7 @@ class Draft {
 
         node.data = wrapProperties(
             node.data,
-            this.collaborativeTextProperties,
+            this.base.collaborativeTextProperties,
             x => x instanceof CollaborativeText ? x : new CollaborativeText(this.id, x)
         )
 
@@ -141,12 +137,12 @@ class Draft {
         }
 
         this.changes.push({
-            id: this._createId(),
+            id: this.base.getId(),
             operation: '_updateCollaborativeTextProperty',
             args: [id, property, change],
             ret,
             author: this.id,
-            timestamp: this.timestamp
+            timestamp: ++this.timestamp
         })
 
         return ret

@@ -220,7 +220,7 @@ class GameTree {
 
         return this.applyChanges([
             {
-                id: [encodeNumber(timestamp), this.id].join('-'),
+                id: this.getId(),
                 operation: '$reset',
                 args: [changeId],
                 ret: null,

@@ -8,7 +8,7 @@ class CollaborativeText {
         let characters = Array.from(initString)
 
         this.id = id
-        this.getTimestamp = ((counter = 0) => () => encodeNumber(++counter))()
+        this.getTimestamp = ((i = 0) => () => encodeNumber(++i))()
         this.data = characters.map((char, i) => ({
             id: [[i, "r", this.getTimestamp()]],
             value: char
