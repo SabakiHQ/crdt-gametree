@@ -142,7 +142,7 @@ Compares the history of `tree` and `oldTree` and returns an array of [changes](#
 
 - `changes` [`<Array<Change>>`](#change-object)
 
-Returns a new `GameTree` instance that applies the given `changes` to the current `tree`. Note that `changes` has to be in logical order for the merge to happen correctly.
+Returns a new `GameTree` instance that applies the given `changes` to the current `tree`.
 
 #### `tree.reset([changeId])`
 
