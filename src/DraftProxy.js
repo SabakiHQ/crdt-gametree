@@ -83,8 +83,7 @@ class Draft {
             args: plainArgs,
             ret,
             author: this.id,
-            timestamp: this.timestamp,
-            _snapshot: null
+            timestamp: this.timestamp
         })
 
         return ret
@@ -147,8 +146,7 @@ class Draft {
             args: [id, property, change],
             ret,
             author: this.id,
-            timestamp: this.timestamp,
-            _snapshot: null
+            timestamp: this.timestamp
         })
 
         return ret
