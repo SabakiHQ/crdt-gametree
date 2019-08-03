@@ -83,7 +83,7 @@ Updates to a collaborative text property made by multiple users will be merged c
 
 ### Change Object
 
-Every mutation operation made to a `GameTree` draft will be represented by a change object:
+Every mutation operation made to a game tree draft will be represented by a change object:
 
 ~~~js
 {
@@ -109,6 +109,10 @@ Every mutation operation made to a `GameTree` draft will be represented by a cha
     - `collaborativeTextProperties` `<Array<String>>` *(optional)* - An array of property identifiers that are [collaborative text properties](#collaborative-text-properties)
     - See [@sabaki/immutable-gametree `GameTree`](https://github.com/SabakiHQ/immutable-gametree#new-gametreeoptions)
         - `getId` `<Function>` *(optional)* - If you specify this function, you have to make sure it generates globally unique ids, not just locally unique ones.
+
+#### `tree.id`
+
+`<Primitive>` - The unique author id.
 
 #### `tree.timestamp`
 
