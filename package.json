@@ -1,6 +1,6 @@
 {
   "name": "@sabaki/crdt-gametree",
-  "version": "0.0.7-alpha",
+  "version": "1.0.0",
   "description": "An immutable, conflict-free replicated game tree data type.",
   "main": "./src/main.js",
   "scripts": {
