@@ -8,15 +8,18 @@ class CollaborativeText {
         let characters = Array.from(initString)
 
         this.id = id
+        this.getTimestamp = ((counter = 0) => () => ++counter)()
         this.data = characters.map((char, i) => ({
-            id: [[i, "r"]],
+            id: [[i, "r", this.getTimestamp()]],
             value: char
         }))
     }
 
     _getIdBetween(id1, id2) {
+        let timestamp = this.getTimestamp()
+
         if (id1 == null && id2 == null) {
-            return [[0, this.id]]
+            return [[0, this.id, timestamp]]
         }
 
         if (id1 != null && id2 != null && id1.length === id2.length) {
@@ -24,9 +27,9 @@ class CollaborativeText {
             let [lastFragment2] = id2.slice(-1)
 
             if (lastFragment2[0] - lastFragment1[0] > 1) {
-                return [...id1.slice(0, -1), [lastFragment1[0] + 1, this.id]]
+                return [...id1.slice(0, -1), [lastFragment1[0] + 1, this.id, timestamp]]
             } else {
-                return [...id1, [0, this.id]]
+                return [...id1, [0, this.id, timestamp]]
             }
         } else {
             let anchorId = id1 == null ? id2
@@ -36,7 +39,7 @@ class CollaborativeText {
             let [lastFragment] = anchorId.slice(-1)
             let position = anchorId === id1 ? 1 : -1
 
-            return [...anchorId.slice(0, -1), [lastFragment[0] + position, this.id]]
+            return [...anchorId.slice(0, -1), [lastFragment[0] + position, this.id, timestamp]]
         }
     }
 
@@ -46,8 +49,8 @@ class CollaborativeText {
         if (length === 0) return []
         if (length === 1) return [id]
 
-        return [...Array(length)].map((_, i) =>
-            [...id.slice(0, -1), [...id.slice(-1)[0], i]]
+        return [...Array(length)].map(_ =>
+            [...id.slice(0, -1), [...id.slice(-1)[0].slice(0, -1), this.getTimestamp()]]
         )
     }
 
@@ -137,6 +140,7 @@ class CollaborativeText {
         }
 
         let result = new CollaborativeText(this.id)
+        result.getTimestamp = this.getTimestamp
         result.data = newData
 
         return result
