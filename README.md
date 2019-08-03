@@ -208,3 +208,7 @@ For example, applying the following collaborative text change object to `"Hello 
 ~~~
 
 will result in `"Hello cruel world. How are you?"`. If you specify a string as `change`, we will perform a diff between the old string and the new one, and automatically generate a minimal collaborative text change object for you in the background.
+
+## Releated
+
+- [immutable-gametree](https://github.com/SabakiHQ/immutable-gametree) - An immutable game tree data type.
