@@ -49,7 +49,7 @@ class GameTree {
 
     _getGameTree() {
         if (this._history.length > 0) {
-            return this._history.peek()._snapshot
+            return this._getSnapshot(this._history, this._history.peek().id)
         }
 
         return this.base
