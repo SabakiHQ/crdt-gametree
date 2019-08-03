@@ -1,4 +1,4 @@
-const {compareLexically} = require('./helper')
+const {encodeNumber, compareLexically} = require('./helper')
 
 const compareId = compareLexically(compareLexically())
 const equalsId = id1 => id2 => compareId(id1, id2) === 0
@@ -8,7 +8,7 @@ class CollaborativeText {
         let characters = Array.from(initString)
 
         this.id = id
-        this.getTimestamp = ((counter = 0) => () => ++counter)()
+        this.getTimestamp = ((counter = 0) => () => encodeNumber(++counter))()
         this.data = characters.map((char, i) => ({
             id: [[i, "r", this.getTimestamp()]],
             value: char
