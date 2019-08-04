@@ -47,6 +47,10 @@ class GameTree {
         }
     }
 
+    getChangeId() {
+        return this._history.length === 0 ? null : this._history.peek().id
+    }
+
     getChanges(oldTree = null) {
         if (oldTree === this) {
             return []

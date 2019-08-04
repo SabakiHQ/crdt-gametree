@@ -130,6 +130,10 @@ A generator function that yields all [changes](#change-object) made to the tree 
 
 Returns an array of [change objects](#change-object) that consists of all the changes made to the tree since initialization in logical order.
 
+#### `tree.getChangeId()`
+
+Returns the id of the [change](#change-object) that led to the current tree state.
+
 #### `tree.getChanges([oldTree])`
 
 - `oldTree` [`<GameTree>`](#class-gametree) *(optional)*
