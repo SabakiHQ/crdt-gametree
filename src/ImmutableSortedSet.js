@@ -1,11 +1,10 @@
 const {compare} = require('./helper')
 
 class ImmutableSortedSet {
-    constructor({data = null, cmp = null, sanitizer = null} = {}) {
+    constructor({data = null, cmp = null} = {}) {
         this.length = data == null ? 0 : data.index + 1
         this.data = data
         this.cmp = cmp || compare
-        this.sanitizer = sanitizer || (x => x)
     }
 
     push(values) {
@@ -37,12 +36,11 @@ class ImmutableSortedSet {
             afterValues.push(value)
         }
 
-        // Sanitize data
+        // Deduplicate data
 
         afterValues = afterValues
             .filter((x, i, a) => i === 0 || this.cmp(a[i - 1], x) !== 0)
             .reverse()
-            .map(this.sanitizer)
 
         // Create new object
 
@@ -54,8 +52,7 @@ class ImmutableSortedSet {
 
         return new ImmutableSortedSet({
             data: newData,
-            cmp: this.cmp,
-            sanitizer: this.sanitizer
+            cmp: this.cmp
         })
     }
 

@@ -45,12 +45,6 @@ exports.compareLexically = (compareFn = exports.compare) => (arr1, arr2) => {
     return inner(0)
 }
 
-exports.sanitizeChange = change =>
-    Object.keys(change).reduce((acc, key) => {
-        if (key[0] !== '_') acc[key] = change[key]
-        return acc
-    }, {})
-
 exports.wrapProperties = (data, properties, fn) => {
     return Object.keys(data).reduce((acc, property) => {
         if (

@@ -2,7 +2,7 @@ const ImmutableGameTree = require('@sabaki/immutable-gametree')
 const CollaborativeText = require('./CollaborativeText')
 const DraftProxy = require('./DraftProxy')
 const ImmutableSortedSet = require('./ImmutableSortedSet')
-const {encodeNumber, uuid, compareChange, sanitizeChange, wrapProperties} = require('./helper')
+const {encodeNumber, uuid, compareChange, wrapProperties} = require('./helper')
 
 const rootId = '02JXJgZ01FqtDf03fvq9F00qN3m7'
 const inheritedMethods = [
@@ -31,35 +31,27 @@ class GameTree {
         this.root = this.base.root
         this.collaborativeTextProperties = collaborativeTextProperties
 
+        this._gameTree = this.base
         this._createdFrom = null
         this._changes = []
         this._history = new ImmutableSortedSet({
-            cmp: compareChange,
-            sanitizer: sanitizeChange
+            cmp: compareChange
         })
 
         // Inherit some methods from @sabaki/immutable-gametree
 
         for (let method of inheritedMethods) {
             this[method] = (...args) => {
-                return this._getGameTree()[method](...args)
+                return this._gameTree[method](...args)
             }
         }
-    }
-
-    _getGameTree() {
-        if (this._history.length > 0) {
-            return this._getSnapshot(this._history, this._history.peek().id)
-        }
-
-        return this.base
     }
 
     getChanges(oldTree = null) {
         if (oldTree === this) {
             return []
         } else if (oldTree == null || oldTree === this._createdFrom) {
-            return this._changes.map(sanitizeChange)
+            return this._changes
         }
 
         return this.getHistory()
@@ -71,9 +63,7 @@ class GameTree {
     }
 
     *listHistory() {
-        for (let change of this._history.reverseIter()) {
-            yield sanitizeChange(change)
-        }
+        yield* this._history.reverseIter()
     }
 
     _getSnapshot(history, changeId = null) {
@@ -94,7 +84,7 @@ class GameTree {
                 snapshotChange = change
             }
 
-            if (change._snapshot == null && recordChanges) {
+            if (recordChanges) {
                 if (change.operation === '$reset') {
                     let newBase = change.args[0]
                         ? this._getSnapshot(history, change.args[0])
@@ -107,9 +97,6 @@ class GameTree {
                 } else {
                     changesOnBase.push(change)
                 }
-            } else if (recordChanges) {
-                base = change._snapshot
-                break
             }
         }
 
@@ -150,8 +137,6 @@ class GameTree {
             }
         })
 
-        snapshotChange._snapshot = newTree
-
         return newTree
     }
 
@@ -173,6 +158,7 @@ class GameTree {
             timestamp,
             base: this.base,
             root: snapshot.root,
+            _gameTree: snapshot,
             _history: newHistory,
             _createdFrom: this,
             _changes: changes
@@ -183,7 +169,7 @@ class GameTree {
 
     mutate(mutator) {
         let draftProxy = null
-        let newTree = this._getGameTree().mutate(draft => {
+        let newTree = this._gameTree.mutate(draft => {
             draftProxy = new DraftProxy(this, draft)
 
             return mutator(draftProxy)
@@ -201,12 +187,12 @@ class GameTree {
         })
 
         let newHistory = this._history.push(draftProxy.changes)
-        newHistory.peek()._snapshot = newTree
 
         Object.assign(result, {
             timestamp: draftProxy.timestamp,
             base: this.base,
             root: newTree.root,
+            _gameTree: newTree,
             _createdFrom: this,
             _changes: draftProxy.changes,
             _history: newHistory
