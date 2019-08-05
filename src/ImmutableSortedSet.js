@@ -77,7 +77,12 @@ class ImmutableSortedSet {
 
     *reverseEnumerate() {
         for (let item of this._reverseIterData()) {
-            yield [item.index, item.value]
+            let previous = new ImmutableSortedSet({
+                data: item.previous,
+                cmp: this.cmp
+            })
+
+            yield [item.index, item.value, previous]
         }
     }
 

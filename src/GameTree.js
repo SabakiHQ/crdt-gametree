@@ -71,7 +71,7 @@ class GameTree {
     }
 
     _getSnapshot(history, changeId = null) {
-        if (changeId == null) {
+        if (history.length === 0 || changeId == null) {
             return this.base
         }
 
@@ -82,7 +82,7 @@ class GameTree {
         let changesOnBase = []
         let base = this.base
 
-        for (let change of history.reverseIter()) {
+        for (let [_, change, previousHistory] of history.reverseEnumerate()) {
             if (change.id === changeId) {
                 recordChanges = true
                 snapshotChange = change
@@ -91,7 +91,7 @@ class GameTree {
             if (recordChanges) {
                 if (change.operation === '$reset') {
                     let newBase = change.args[0]
-                        ? this._getSnapshot(history, change.args[0])
+                        ? this._getSnapshot(previousHistory, change.args[0])
                         : this.base
 
                     if (newBase == null) continue
