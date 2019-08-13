@@ -20,7 +20,6 @@ class Draft {
         this.timestamp = base.timestamp
         this.base = base
         this.draft = draft
-        this.root = draft.root
         this.changes = []
 
         // Operation methods
@@ -40,9 +39,12 @@ class Draft {
         }
     }
 
+    get root() {
+        return this.draft.root
+    }
+
     get(id) {
         let result = this.draft.get(id)
-        this.root = this.draft.root
         return result
     }
 
@@ -72,7 +74,6 @@ class Draft {
 
         // Log changes
 
-        this.root = this.draft.root
         this.changes.push({
             id: this.base.getId(),
             operation,
