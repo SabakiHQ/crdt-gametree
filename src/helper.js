@@ -1,7 +1,7 @@
 const {v4: uuid} = require('uuid')
 
 const uuidChars =
-  '0123456789' + 'abcdefghijklmnopqrstuvwxyz' + 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 exports.encodeNumber = num => {
   let m = uuidChars.length
@@ -33,7 +33,7 @@ exports.uuid = () => {
 
 exports.compare = (x, y) => (x < y ? -1 : +(x > y))
 
-exports.compareMap = function compareMap(fn, cmp = defaultCmp) {
+exports.compareMap = function compareMap(fn, cmp = exports.compare) {
   return (x, y) => cmp(fn(x), fn(y))
 }
 
