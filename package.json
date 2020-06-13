@@ -4,7 +4,9 @@
   "description": "An immutable, conflict-free replicated game tree data type.",
   "main": "./src/main.js",
   "scripts": {
-    "test": "tap --test-regex=.*\\.test\\.js$"
+    "test": "tap --test-regex=.*\\.test\\.js$",
+    "format": "prettier \"**/*.{js,md}\" --write",
+    "format-watch": "onchange \"**/*.{js,md}\" -- prettier --write {{changed}}"
   },
   "repository": {
     "type": "git",
@@ -24,11 +26,20 @@
     "url": "https://github.com/SabakiHQ/crdt-gametree/issues"
   },
   "homepage": "https://github.com/SabakiHQ/crdt-gametree",
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "bracketSpacing": false,
+    "proseWrap": "always",
+    "arrowParens": "avoid"
+  },
   "dependencies": {
     "@sabaki/immutable-gametree": "^1.8.1",
     "uuid": "^8.1.0"
   },
   "devDependencies": {
+    "onchange": "^7.0.2",
+    "prettier": "^2.0.5",
     "tap": "^14.5.0"
   }
 }
