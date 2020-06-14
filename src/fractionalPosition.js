@@ -1,6 +1,6 @@
 const {compareLexically} = require('./helper')
 
-exports.compare = function compare(pos1, pos2) {
+exports.compare = function (pos1, pos2) {
   if (pos1 == null && pos1 == pos2) {
     return 0
   } else if (pos1 == null) {
@@ -12,11 +12,11 @@ exports.compare = function compare(pos1, pos2) {
   return compareLexically(compareLexically())(pos1, pos2)
 }
 
-exports.equals = function equals(pos1, pos2) {
-  return compare(pos1, pos2) === 0
+exports.equals = function (pos1, pos2) {
+  return exports.compare(pos1, pos2) === 0
 }
 
-exports.create = function create(author, beforePos, afterPos) {
+exports.create = function (author, beforePos, afterPos) {
   if (beforePos == null && afterPos == null) {
     return [[0, author]]
   }

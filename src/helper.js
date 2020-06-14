@@ -3,7 +3,7 @@ const {v4: uuid} = require('uuid')
 const uuidChars =
   '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
-exports.encodeNumber = num => {
+exports.encodeNumber = function (num) {
   let m = uuidChars.length
   let maxExponent = n => (n === 0 ? 0 : Math.floor(Math.log(n) / Math.log(m)))
   let result = ''
@@ -17,7 +17,7 @@ exports.encodeNumber = num => {
   return result
 }
 
-exports.uuid = () => {
+exports.uuid = function () {
   let id = uuid().replace(/-/g, '')
   let chunk = 8
   let mChunk =
@@ -27,23 +27,27 @@ exports.uuid = () => {
     parseInt(id.slice(i, i + chunk), 16)
   )
 
-  let result = numbers.map(n => exports.encodeNumber(n).padStart(mChunk, '0'))
+  let result = numbers.map(n => encodeNumber(n).padStart(mChunk, '0'))
   return result.join('')
 }
 
-exports.compare = (x, y) => (x < y ? -1 : +(x > y))
+exports.compare = function (x, y) {
+  return x < y ? -1 : +(x > y)
+}
 
-exports.compareMap = function compareMap(fn, cmp = exports.compare) {
+exports.compareMap = function (fn, cmp = exports.compare) {
   return (x, y) => cmp(fn(x), fn(y))
 }
 
-exports.compareLexically = (compareFn = exports.compare) => (arr1, arr2) => {
-  let inner = i => {
-    if (i >= arr1.length || i >= arr2.length) return arr1.length - arr2.length
+exports.compareLexically = function (cmp = exports.compare) {
+  return (arr1, arr2) => {
+    let inner = i => {
+      if (i >= arr1.length || i >= arr2.length) return arr1.length - arr2.length
 
-    let compare = compareFn(arr1[i], arr2[i])
-    return compare !== 0 ? compare : inner(i + 1)
+      let compare = cmp(arr1[i], arr2[i])
+      return compare !== 0 ? compare : inner(i + 1)
+    }
+
+    return inner(0)
   }
-
-  return inner(0)
 }
