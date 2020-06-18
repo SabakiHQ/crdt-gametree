@@ -162,6 +162,44 @@ class GameTree extends EventEmitter {
     return true
   }
 
+  shiftNode({id, direction}) {
+    if (!['left', 'right', 'main'].includes(direction)) return false
+
+    let node = this._nodes[id]
+    if (node == null) return false
+
+    let parent = this.get(node.parentId)
+    if (parent == null) return false
+
+    let beforePosition = null
+    let afterPosition = null
+
+    if (direction !== 'main') {
+      let index = parent.children.findIndex(child => child.id === id)
+      let step = direction === 'left' ? -1 : 1
+      if (index + step < 0 || index + step >= parent.children.length)
+        return false
+      ;[beforePosition, afterPosition] = (step > 0
+        ? [step, step + 1]
+        : [step - 1, step]
+      )
+        .map(step => parent.children[step])
+        .map(sibling => this._nodes[sibling.id].meta.position)
+    } else {
+      if (parent.children[0].id === id) return false
+
+      afterPosition = this._nodes[parent.children[0].id].meta.position
+    }
+
+    let newPosition = fractionalPosition.create(
+      this.authorId,
+      beforePosition,
+      afterPosition
+    )
+
+    return this.repositionNode({id, position: newPosition})
+  }
+
   removeNode({id}) {
     let node = this._nodes[id]
     if (node == null || node.removed) return false
@@ -219,14 +257,19 @@ class GameTree extends EventEmitter {
     return true
   }
 
-  addToProperty({id, prop, propId = null, value}) {
+  addPropValue({id, prop, propId = null, value}) {
     let node = this._nodes[id]
     if (node == null) return null
 
     if (propId == null) propId = this.getId()
     let timestamp = this._tick()
 
-    let meta = {id: propId, removed: false}
+    let meta = {
+      id: propId,
+      removed: false,
+      removedTimestamp: [],
+      updatedTimestamp: [],
+    }
 
     if (node.props[prop] == null || node.propsMeta[prop] == null) {
       node.props[prop] = [value]
@@ -239,7 +282,7 @@ class GameTree extends EventEmitter {
     }
 
     this.emit('change', {
-      type: 'addToProperty',
+      type: 'addPropValue',
       timestamp,
       data: {id, prop, propId, value},
     })
@@ -247,7 +290,7 @@ class GameTree extends EventEmitter {
     return propId
   }
 
-  removeFromProperty({id, prop, propId}) {
+  removePropValueById({id, prop, propId}) {
     let node = this._nodes[id]
     if (
       node == null ||
@@ -258,14 +301,15 @@ class GameTree extends EventEmitter {
 
     let timestamp = this._tick()
     let meta = node.propsMeta[prop].find(meta => meta.id === propId)
-    if (meta == null) return false
+    if (meta == null || meta.removed) return false
 
     Object.assign(meta, {
       removed: true,
+      removedTimestamp: timestamp,
     })
 
     this.emit('change', {
-      type: 'removeFromProperty',
+      type: 'removePropValueById',
       timestamp,
       data: {id, prop, propId},
     })
@@ -273,7 +317,7 @@ class GameTree extends EventEmitter {
     return true
   }
 
-  removeValueFromProperty({id, prop, value}) {
+  removePropValue({id, prop, value}) {
     let node = this._nodes[id]
     if (
       node == null ||
@@ -287,8 +331,78 @@ class GameTree extends EventEmitter {
       .map(meta => meta.id)
 
     for (let propId of propIds) {
-      this.removeFromProperty({id: propId, prop, propId})
+      this.removePropValueById({id: propId, prop, propId})
     }
+
+    return true
+  }
+
+  removeProp({id, prop}) {
+    let node = this._nodes[id]
+    if (
+      node == null ||
+      node.props[prop] == null ||
+      node.propsMeta[prop] == null
+    )
+      return false
+
+    for (let {id: propId} of node.propsMeta[prop]) {
+      this.removePropValueById({id, prop, propId})
+    }
+
+    return true
+  }
+
+  restorePropValue({id, prop, propId}) {
+    let node = this._nodes[id]
+    if (
+      node == null ||
+      node.props[prop] == null ||
+      node.propsMeta[prop] == null
+    )
+      return false
+
+    let timestamp = this._tick()
+    let meta = node.propsMeta[prop].find(meta => meta.id === propId)
+    if (meta == null || !meta.removed) return false
+
+    Object.assign(meta, {
+      removed: false,
+      removedTimestamp: timestamp,
+    })
+
+    this.emit('change', {
+      type: 'restorePropValue',
+      timestamp,
+      data: {id, prop, propId},
+    })
+
+    return true
+  }
+
+  updatePropValue({id, prop, propId, value}) {
+    let node = this._nodes[id]
+    if (
+      node == null ||
+      node.props[prop] == null ||
+      node.propsMeta[prop] == null
+    )
+      return false
+
+    let index = node.propsMeta[prop].findIndex(meta => meta.id === propId)
+    let oldValue = node.props[prop][index]
+    if (index < 0 || oldValue === value) return false
+
+    let timestamp = this._tick()
+
+    node.props[prop][index] = value
+    node.propsMeta[prop][index].updatedTimestamp = timestamp
+
+    this.emit('change', {
+      type: 'updatePropValue',
+      timestamp,
+      data: {id, prop, propId, value, oldValue},
+    })
 
     return true
   }
