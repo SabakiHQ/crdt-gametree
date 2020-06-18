@@ -52,6 +52,6 @@ exports.compareLexically = function (cmp = exports.compare) {
   }
 }
 
-exports.max = function (a, b, cmp = exports.compare) {
-  return cmp(a, b) < 0 ? b : a
+exports.max = function (cmp = exports.compare) {
+  return (a, ...rest) => rest.reduce((max, x) => (cmp(max, x) < 0 ? x : max), a)
 }
