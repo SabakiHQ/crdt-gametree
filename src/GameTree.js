@@ -82,10 +82,6 @@ class GameTree extends EventEmitter {
     }
   }
 
-  getHash() {
-    return this.timestamp.join('-')
-  }
-
   toJSON() {
     return {
       nodes: this._nodes,
