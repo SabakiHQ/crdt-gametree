@@ -75,7 +75,9 @@ export class Mutator {
     });
 
     this.result.changes.push(timestampedChange);
-    if (inverseChange != null) this.result.inverseChanges.push(inverseChange);
+    if (inverseChange != null) {
+      this.result.inverseChanges.unshift(inverseChange);
+    }
 
     this.tree.applyChange(timestampedChange);
 
