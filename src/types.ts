@@ -1,4 +1,4 @@
-import type { Change } from "./Change.ts";
+import type { Change, TimestampedChange } from "./Change.ts";
 import type { FracPos } from "./fractionalPosition.ts";
 import type { Timestamped, TimestampedValue } from "./timestamp.ts";
 
@@ -50,12 +50,12 @@ export interface Node extends Timestamped {
 }
 
 export interface MutateResult {
-  changes: Change[];
+  changes: TimestampedChange[];
   inverseChanges: Change[];
 }
 
 export interface GameTreeJson {
   timestamp: number;
-  metaNodes: PartRecord<string, MetaNode>;
-  queuedChanges: PartRecord<string, Change[]>;
+  metaNodes: Readonly<PartRecord<string, MetaNode>>;
+  queuedChanges: Readonly<PartRecord<string, TimestampedChange[]>>;
 }

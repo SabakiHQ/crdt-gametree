@@ -1,5 +1,5 @@
 import { Enum } from "../deps.ts";
-import { Change } from "./Change.ts";
+import { TimestampedChange } from "./Change.ts";
 import type {
   Currents,
   GameTreeJson,
@@ -28,7 +28,7 @@ export class GameTree {
   author: string;
   private _timestamp: number;
   private _metaNodes: PartRecord<string, MetaNode> = {};
-  private _queuedChanges: PartRecord<string, Change[]> = {};
+  private _queuedChanges: PartRecord<string, TimestampedChange[]> = {};
 
   constructor(options: Readonly<GameTreeOptions>) {
     this.author = options.author;
@@ -236,7 +236,7 @@ export class GameTree {
     delete this._queuedChanges[id];
   }
 
-  private queueChange(id: Id, change: Change): void {
+  private queueChange(id: Id, change: TimestampedChange): void {
     let queue = this._queuedChanges[id];
 
     if (queue == null) {
@@ -246,8 +246,8 @@ export class GameTree {
     queue.push(change);
   }
 
-  applyChange(change: Change): this {
-    this.tick(Enum.match<Change, number | undefined>(change, {
+  applyChange(change: TimestampedChange): this {
+    this.tick(Enum.match<TimestampedChange, number | undefined>(change, {
       AppendNode: extractTimestamp,
       UpdateNode: extractTimestamp,
       UpdateProperty: extractTimestamp,
@@ -266,7 +266,7 @@ export class GameTree {
           // Found node with same id already
           // Transform into an UpdateNode with an undelete operation instead
 
-          return this.applyChange(Change.UpdateNode({
+          return this.applyChange(TimestampedChange.UpdateNode({
             ...authorTimestamp,
             id: data.id,
             deleted: false,
