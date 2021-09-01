@@ -40,7 +40,7 @@ Deno.test({
     const mainLine = [rootId, ...tree.currentDescendants(rootId)];
     assert.assertEquals(mainLine.length, 3);
 
-    const currents = new Map().set("1", "3");
+    const currents = { "1": "3" as Id };
     const currentLine = [rootId, ...tree.currentDescendants(rootId, currents)];
     assert.assertEquals(currentLine.length, 4);
 

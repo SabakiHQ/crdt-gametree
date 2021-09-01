@@ -6,7 +6,7 @@ declare const idTag: unique symbol;
 
 export type Id = string & { [idTag]: true };
 
-export type Currents = Map<Id, Id>;
+export type Currents = Partial<Record<string, Id>>;
 
 export type Key = string | number;
 
@@ -42,11 +42,11 @@ export interface Node extends Timestamped {
   readonly parent: Node | null;
   isolated(): boolean;
   children(): readonly Node[];
-  props(): Readonly<Partial<Record<string, [string, ...string[]]>>>;
+  props(): Readonly<Partial<Record<string, readonly [string, ...string[]]>>>;
 }
 
 export interface GameTreeJson {
   timestamp: number;
-  metaNodes: Record<string, MetaNode>;
-  queuedChanges: Record<string, Change[]>;
+  metaNodes: Partial<Record<string, MetaNode>>;
+  queuedChanges: Partial<Record<string, Change[]>>;
 }
