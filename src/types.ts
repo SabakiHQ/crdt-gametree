@@ -49,6 +49,11 @@ export interface Node extends Timestamped {
   props(): Readonly<PartRecord<string, readonly [string, ...string[]]>>;
 }
 
+export interface MutateResult {
+  changes: Change[];
+  inverseChanges: Change[];
+}
+
 export interface GameTreeJson {
   timestamp: number;
   metaNodes: PartRecord<string, MetaNode>;

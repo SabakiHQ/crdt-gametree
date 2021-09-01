@@ -8,6 +8,7 @@ import type {
   MetaNode,
   MetaNodeProperty,
   MetaNodePropertyValue,
+  MutateResult,
   Node,
   PartRecord,
 } from "./types.ts";
@@ -19,6 +20,7 @@ import {
   extractAuthorTimestamp,
   extractTimestamp,
 } from "./timestamp.ts";
+import { Mutator } from "./Mutator.ts";
 
 const rootId = "R" as Id;
 
@@ -429,6 +431,17 @@ export class GameTree {
     });
 
     return this;
+  }
+
+  mutate(fn: (mutator: Mutator) => void): MutateResult {
+    const result: MutateResult = {
+      changes: [],
+      inverseChanges: [],
+    };
+
+    fn(new Mutator(this, result));
+
+    return result;
   }
 
   static fromJSON(
