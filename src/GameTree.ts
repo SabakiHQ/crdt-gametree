@@ -1,4 +1,4 @@
-import { Enum } from "./deps.ts";
+import { Enum } from "../deps.ts";
 import { Change } from "./types.ts";
 import type {
   Currents,

@@ -1,11 +1,11 @@
-export type CompareFunction<T> = (x: T, y: T) => number;
+export type CompareFunction<T> = (x: T, y: T) => -1 | 0 | 1;
 
 export function uuid(): string {
   return crypto.randomUUID().replace(/-/g, "");
 }
 
-export function compare<T>(x: T, y: T): number {
-  return x < y ? -1 : +(x > y);
+export function compare<T>(x: T, y: T): -1 | 0 | 1 {
+  return x < y ? -1 : x > y ? 1 : 0;
 }
 
 export function compareMap<T, U>(
@@ -19,9 +19,9 @@ export function compareLexically<T>(
   cmp: CompareFunction<T> = compare,
 ): CompareFunction<T[]> {
   return (arr1, arr2) => {
-    let inner = (i: number): number => {
+    let inner = (i: number): -1 | 0 | 1 => {
       if (i >= arr1.length || i >= arr2.length) {
-        return arr1.length - arr2.length;
+        return Math.sign(arr1.length - arr2.length) as -1 | 0 | 1;
       }
 
       let compare = cmp(arr1[i], arr2[i]);
@@ -42,5 +42,5 @@ export function max<T>(
 export function min<T>(
   cmp: CompareFunction<T> = compare,
 ): (...xs: T[]) => T | null {
-  return max((x, y) => -cmp(x, y));
+  return max((x, y) => -cmp(x, y) as -1 | 0 | 1);
 }

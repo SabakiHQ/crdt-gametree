@@ -2,19 +2,11 @@ import { compareLexically } from "./helper.ts";
 
 export type FracPos = [...[number, string][], [number, string]];
 
-export function compare(pos1: FracPos | null, pos2: FracPos | null): number {
-  if (pos1 == null && pos1 == pos2) {
-    return 0;
-  } else if (pos1 == null) {
-    return -1;
-  } else if (pos2 == null) {
-    return 1;
-  }
-
-  return compareLexically(compareLexically<number | string>())(pos1, pos2);
-}
+export const compare = compareLexically(compareLexically<number | string>());
 
 export function equals(pos1: FracPos | null, pos2: FracPos | null) {
+  if (pos1 == null && pos1 == pos2) return true;
+  if (pos1 == null || pos2 == null) return false;
   return compare(pos1, pos2) === 0;
 }
 
@@ -25,6 +17,10 @@ export function create(
 ): FracPos {
   if (before == null && after == null) {
     return [[0, author]];
+  } else if (equals(before, after)) {
+    throw new Error("Impossible position, as before is equals to after");
+  } else if (before != null && after != null && compare(before, after) > 0) {
+    throw new Error("Impossible position, as before is greater than after");
   }
 
   if (

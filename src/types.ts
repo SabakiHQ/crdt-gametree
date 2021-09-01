@@ -1,5 +1,5 @@
 import type { FracPos } from "./fractionalPosition.ts";
-import { Enum } from "./deps.ts";
+import { Enum } from "../deps.ts";
 
 declare const idTag: unique symbol;
 
