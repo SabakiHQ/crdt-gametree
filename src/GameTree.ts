@@ -24,17 +24,17 @@ const rootId = "R" as Id;
 
 export class GameTree {
   author: string;
-  private timestamp: number;
-  private metaNodes: PartRecord<string, MetaNode> = {};
-  private queuedChanges: PartRecord<string, Change[]> = {};
+  private _timestamp: number;
+  private _metaNodes: PartRecord<string, MetaNode> = {};
+  private _queuedChanges: PartRecord<string, Change[]> = {};
 
   constructor(options: Readonly<GameTreeOptions>) {
     this.author = options.author;
-    this.timestamp = Math.max(options.timestamp ?? 1, 1);
+    this._timestamp = Math.max(options.timestamp ?? 1, 1);
 
     // Create root node
 
-    this.metaNodes[rootId] = {
+    this._metaNodes[rootId] = {
       id: rootId,
       author: this.author,
       timestamp: 0,
@@ -49,17 +49,17 @@ export class GameTree {
 
   tick(timestamp?: number): number {
     if (timestamp != null) {
-      this.timestamp = Math.max(this.timestamp, timestamp);
+      this._timestamp = Math.max(this._timestamp, timestamp);
     }
 
-    return this.timestamp++;
+    return this._timestamp++;
   }
 
   *ancestors(id: Id): Generator<Id> {
-    let metaNode = this.metaNodes[id];
+    let metaNode = this._metaNodes[id];
 
     while (metaNode != null && metaNode.parent != null) {
-      metaNode = this.metaNodes[metaNode.parent];
+      metaNode = this._metaNodes[metaNode.parent];
       if (metaNode == null || metaNode.deleted?.value === true) return;
 
       yield metaNode.id;
@@ -73,7 +73,7 @@ export class GameTree {
 
     while (stack.length > 0) {
       const stackId = stack.pop()!;
-      const metaNode = this.metaNodes[stackId];
+      const metaNode = this._metaNodes[stackId];
 
       if (metaNode != null && !metaNode.deleted?.value) {
         if (stackId !== id) yield stackId;
@@ -84,7 +84,7 @@ export class GameTree {
   }
 
   *currentDescendants(id: Id, currents?: Currents): Generator<Id> {
-    let metaNode = this.metaNodes[id];
+    let metaNode = this._metaNodes[id];
 
     while (
       metaNode != null &&
@@ -94,7 +94,7 @@ export class GameTree {
       const currentChildId = (() => {
         const currentChildId = currents?.[metaNode.id];
         const childrenMetaNodes = metaNode.children
-          .map((id) => this.metaNodes[id])
+          .map((id) => this._metaNodes[id])
           .filter((metaNode): metaNode is MetaNode =>
             metaNode != null && !metaNode.deleted?.value
           );
@@ -121,7 +121,7 @@ export class GameTree {
       if (currentChildId == null) break;
       yield currentChildId;
 
-      metaNode = this.metaNodes[currentChildId];
+      metaNode = this._metaNodes[currentChildId];
     }
   }
 
@@ -148,7 +148,7 @@ export class GameTree {
   }
 
   isCurrent(id: Id, currents?: Currents): boolean {
-    const metaNode = this.metaNodes[id];
+    const metaNode = this._metaNodes[id];
     if (metaNode == null) return false;
     if (metaNode.level === 0) return true;
 
@@ -157,7 +157,7 @@ export class GameTree {
   }
 
   get(id: Id): Node | null {
-    const metaNode = this.metaNodes[id];
+    const metaNode = this._metaNodes[id];
     if (metaNode == null || metaNode.deleted?.value === true) return null;
 
     const self = this;
@@ -195,7 +195,7 @@ export class GameTree {
         return (metaNode?.children ?? [])
           .sort(
             compareMap(
-              (id) => self.metaNodes[id]!.position.value,
+              (id) => self._metaNodes[id]!.position.value,
               comparePositions,
             ),
           )
@@ -225,20 +225,20 @@ export class GameTree {
   }
 
   private applyQueuedChanges(id: Id): void {
-    const queue = this.queuedChanges[id] ?? [];
+    const queue = this._queuedChanges[id] ?? [];
 
     for (const change of queue) {
       this.applyChange(change);
     }
 
-    delete this.queuedChanges[id];
+    delete this._queuedChanges[id];
   }
 
   private queueChange(id: Id, change: Change): void {
-    let queue = this.queuedChanges[id];
+    let queue = this._queuedChanges[id];
 
     if (queue == null) {
-      queue = this.queuedChanges[id] = [];
+      queue = this._queuedChanges[id] = [];
     }
 
     queue.push(change);
@@ -256,8 +256,8 @@ export class GameTree {
     Enum.match(change, {
       AppendNode: (data) => {
         const authorTimestamp = extractAuthorTimestamp(data);
-        const parentMetaNode = this.metaNodes[data.parent];
-        const metaNode = this.metaNodes[data.id];
+        const parentMetaNode = this._metaNodes[data.parent];
+        const metaNode = this._metaNodes[data.id];
         let mergingMetaNode: MetaNode | undefined;
 
         if (metaNode != null) {
@@ -276,7 +276,7 @@ export class GameTree {
         } else if (
           data.key != null &&
           (mergingMetaNode = parentMetaNode.children
-              ?.map((id) => this.metaNodes[id])
+              ?.map((id) => this._metaNodes[id])
               .find(
                 (siblingMetaNode) => siblingMetaNode?.key === data.key,
               )) != null
@@ -291,12 +291,12 @@ export class GameTree {
             },
           });
 
-          this.metaNodes[data.id] = mergingMetaNode;
+          this._metaNodes[data.id] = mergingMetaNode;
           this.applyQueuedChanges(data.id);
         } else {
           // Add node
 
-          this.metaNodes[data.id] = {
+          this._metaNodes[data.id] = {
             ...authorTimestamp,
             id: data.id,
             key: data.key,
@@ -312,7 +312,7 @@ export class GameTree {
         }
       },
       UpdateNode: (data) => {
-        const metaNode = this.metaNodes[data.id];
+        const metaNode = this._metaNodes[data.id];
 
         if (data.id === rootId) {
           // Ignore deletions/repositioning of root node
@@ -347,7 +347,7 @@ export class GameTree {
         }
       },
       UpdatePropertyValue: (data) => {
-        const metaNode = this.metaNodes[data.id];
+        const metaNode = this._metaNodes[data.id];
 
         if (metaNode == null) {
           // Node not created yet, queue change
@@ -388,7 +388,7 @@ export class GameTree {
         }
       },
       UpdateProperty: (data) => {
-        const metaNode = this.metaNodes[data.id];
+        const metaNode = this._metaNodes[data.id];
 
         if (metaNode == null) {
           // Node not created yet, queue change
@@ -440,17 +440,17 @@ export class GameTree {
       timestamp: data.timestamp,
     });
 
-    result.metaNodes = data.metaNodes;
-    result.queuedChanges = data.queuedChanges;
+    result._metaNodes = data.metaNodes;
+    result._queuedChanges = data.queuedChanges;
 
     return result;
   }
 
   toJSON(): GameTreeJson {
     return {
-      timestamp: this.timestamp,
-      metaNodes: this.metaNodes,
-      queuedChanges: this.queuedChanges,
+      timestamp: this._timestamp,
+      metaNodes: this._metaNodes,
+      queuedChanges: this._queuedChanges,
     };
   }
 }
