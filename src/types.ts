@@ -4,9 +4,13 @@ import type { Timestamped, TimestampedValue } from "./timestamp.ts";
 
 declare const idTag: unique symbol;
 
+export type PartRecord<T extends string | number | symbol, U> = Partial<
+  Record<T, U>
+>;
+
 export type Id = string & { [idTag]: true };
 
-export type Currents = Partial<Record<string, Id>>;
+export type Currents = PartRecord<string, Id>;
 
 export type Key = string | number;
 
@@ -22,7 +26,7 @@ export interface MetaNode extends Timestamped {
   readonly parent?: Id;
   deleted?: TimestampedValue<boolean>;
   position: TimestampedValue<FracPos>;
-  props?: Partial<Record<string, MetaNodeProperty>>;
+  props?: PartRecord<string, MetaNodeProperty>;
   children?: Id[];
 }
 
@@ -42,11 +46,11 @@ export interface Node extends Timestamped {
   readonly parent: Node | null;
   isolated(): boolean;
   children(): readonly Node[];
-  props(): Readonly<Partial<Record<string, readonly [string, ...string[]]>>>;
+  props(): Readonly<PartRecord<string, readonly [string, ...string[]]>>;
 }
 
 export interface GameTreeJson {
   timestamp: number;
-  metaNodes: Partial<Record<string, MetaNode>>;
-  queuedChanges: Partial<Record<string, Change[]>>;
+  metaNodes: PartRecord<string, MetaNode>;
+  queuedChanges: PartRecord<string, Change[]>;
 }

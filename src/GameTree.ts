@@ -9,6 +9,7 @@ import type {
   MetaNodeProperty,
   MetaNodePropertyValue,
   Node,
+  PartRecord,
 } from "./types.ts";
 import { compareMap, min } from "./helper.ts";
 import { comparePositions, createPosition } from "./fractionalPosition.ts";
@@ -24,8 +25,8 @@ const rootId = "R" as Id;
 export class GameTree {
   author: string;
   private timestamp: number;
-  private metaNodes: Partial<Record<string, MetaNode>> = {};
-  private queuedChanges: Partial<Record<string, Change[]>> = {};
+  private metaNodes: PartRecord<string, MetaNode> = {};
+  private queuedChanges: PartRecord<string, Change[]> = {};
 
   constructor(options: Readonly<GameTreeOptions>) {
     this.author = options.author;
@@ -214,7 +215,7 @@ export class GameTree {
             }
 
             return props;
-          }, {} as Partial<Record<string, string[]>>);
+          }, {} as PartRecord<string, string[]>);
       },
     } as Node & { _parent?: Node | null };
   }
