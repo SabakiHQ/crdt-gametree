@@ -2,7 +2,9 @@ import { compareLexically } from "./helper.ts";
 
 export type FracPos = [...[number, string][], [number, string]];
 
-export const compare = compareLexically(compareLexically<number | string>());
+export function compare(pos1: FracPos, pos2: FracPos): -1 | 0 | 1 {
+  return compareLexically(compareLexically<number | string>())(pos1, pos2);
+}
 
 export function equals(pos1: FracPos | null, pos2: FracPos | null) {
   if (pos1 == null && pos1 == pos2) return true;

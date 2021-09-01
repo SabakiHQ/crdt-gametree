@@ -27,7 +27,7 @@ export interface MetaNode extends Timestamped {
   readonly key?: Key;
   readonly parent?: Id;
   deleted?: TimestampedValue<boolean>;
-  position?: TimestampedValue<FracPos>;
+  position: TimestampedValue<FracPos>;
   props?: Partial<Record<string, MetaNodePropertyValue[]>>;
   children?: Id[];
 }

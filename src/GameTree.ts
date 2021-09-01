@@ -9,7 +9,10 @@ import type {
   Node,
 } from "./types.ts";
 import { compareMap, min } from "./helper.ts";
-import { compare as comparePositions } from "./fractionalPosition.ts";
+import {
+  compare as comparePositions,
+  create as createPosition,
+} from "./fractionalPosition.ts";
 
 const rootId: Id = "R";
 
@@ -20,18 +23,25 @@ export class GameTree {
 
   constructor(options: Readonly<GameTreeOptions>) {
     this.author = options.author;
-    this.timestamp = options.timestamp ?? 0;
+    this.timestamp = options.timestamp ?? 1;
 
     // Create root node
 
-    const rootNode = {
+    this.metaNodes.set(rootId, {
       id: rootId,
       author: this.author,
-      timestamp: ++this.timestamp,
+      timestamp: 0,
       level: 0,
-    };
+      position: {
+        author: rootId,
+        timestamp: 0,
+        value: createPosition(rootId, null, null),
+      },
+    });
+  }
 
-    this.metaNodes.set(rootId, rootNode);
+  tick(): number {
+    return this.timestamp++;
   }
 
   *ancestors(id: Id): Generator<Id> {
@@ -91,7 +101,7 @@ export class GameTree {
 
         return min(
           compareMap(
-            (value: MetaNode) => value.position?.value ?? null,
+            (metaNode: MetaNode) => metaNode.position.value,
             comparePositions,
           ),
         )(...childrenMetaNodes)?.id;
@@ -172,7 +182,7 @@ export class GameTree {
         return [...metaNode?.children ?? []]
           .sort(
             compareMap(
-              (id) => self.metaNodes.get(id)?.position?.value ?? null,
+              (id) => self.metaNodes.get(id)!.position.value,
               comparePositions,
             ),
           )
