@@ -1,27 +1,32 @@
 import { compareLexically } from "./helper.ts";
 
-export type FracPos = [...[number, string][], [number, string]];
+export type FracPos = readonly [
+  ...(readonly [number, string])[],
+  readonly [number, string],
+];
 
-export function compare(pos1: FracPos, pos2: FracPos): -1 | 0 | 1 {
+export function comparePositions(pos1: FracPos, pos2: FracPos): -1 | 0 | 1 {
   return compareLexically(compareLexically<number | string>())(pos1, pos2);
 }
 
-export function equals(pos1: FracPos | null, pos2: FracPos | null) {
+export function equalsPositions(pos1: FracPos | null, pos2: FracPos | null) {
   if (pos1 == null && pos1 == pos2) return true;
   if (pos1 == null || pos2 == null) return false;
-  return compare(pos1, pos2) === 0;
+  return comparePositions(pos1, pos2) === 0;
 }
 
-export function create(
+export function createPosition(
   author: string,
   before: FracPos | null,
   after: FracPos | null,
 ): FracPos {
   if (before == null && after == null) {
     return [[0, author]];
-  } else if (equals(before, after)) {
+  } else if (equalsPositions(before, after)) {
     throw new Error("Impossible position, as before is equals to after");
-  } else if (before != null && after != null && compare(before, after) > 0) {
+  } else if (
+    before != null && after != null && comparePositions(before, after) > 0
+  ) {
     throw new Error("Impossible position, as before is greater than after");
   }
 

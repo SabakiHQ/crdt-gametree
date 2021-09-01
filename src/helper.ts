@@ -17,7 +17,7 @@ export function compareMap<T, U>(
 
 export function compareLexically<T>(
   cmp: CompareFunction<T> = compare,
-): CompareFunction<T[]> {
+): CompareFunction<readonly T[]> {
   return (arr1, arr2) => {
     let inner = (i: number): -1 | 0 | 1 => {
       if (i >= arr1.length || i >= arr2.length) {
@@ -34,13 +34,13 @@ export function compareLexically<T>(
 
 export function max<T>(
   cmp: CompareFunction<T> = compare,
-): (...xs: T[]) => T | null {
+): (...xs: readonly T[]) => T | null {
   return (x, ...rest) =>
     x == null ? null : rest.reduce((max, x) => (cmp(max, x) < 0 ? x : max), x);
 }
 
 export function min<T>(
   cmp: CompareFunction<T> = compare,
-): (...xs: T[]) => T | null {
+): (...xs: readonly T[]) => T | null {
   return max((x, y) => -cmp(x, y) as -1 | 0 | 1);
 }

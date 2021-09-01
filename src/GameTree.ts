@@ -1,18 +1,22 @@
 import { Enum } from "../deps.ts";
-import { Change } from "./types.ts";
+import { Change } from "./Change.ts";
 import type {
   Currents,
   GameTreeJson,
   GameTreeOptions,
   Id,
   MetaNode,
+  MetaNodeProperty,
+  MetaNodePropertyValue,
   Node,
 } from "./types.ts";
 import { compareMap, min } from "./helper.ts";
+import { comparePositions, createPosition } from "./fractionalPosition.ts";
 import {
-  compare as comparePositions,
-  create as createPosition,
-} from "./fractionalPosition.ts";
+  compareTimestamps,
+  conditionallyAssign,
+  extractTimestamp,
+} from "./timestamp.ts";
 
 const rootId: Id = "R";
 
@@ -20,10 +24,11 @@ export class GameTree {
   author: string;
   private timestamp: number;
   private metaNodes: Map<Id, MetaNode> = new Map();
+  private queuedChanges: Map<Id, Change[]> = new Map();
 
   constructor(options: Readonly<GameTreeOptions>) {
     this.author = options.author;
-    this.timestamp = options.timestamp ?? 1;
+    this.timestamp = Math.max(options.timestamp ?? 1, 1);
 
     // Create root node
 
@@ -169,6 +174,8 @@ export class GameTree {
       },
 
       isolated() {
+        if (id === rootId) return false;
+
         // Find whether there is a deleted ancestor
 
         for (const ancestorId of self.ancestors(id)) {
@@ -179,7 +186,7 @@ export class GameTree {
       },
 
       children() {
-        return [...metaNode?.children ?? []]
+        return (metaNode?.children ?? [])
           .sort(
             compareMap(
               (id) => self.metaNodes.get(id)!.position.value,
@@ -192,10 +199,14 @@ export class GameTree {
 
       props() {
         return Object.entries(metaNode?.props ?? {})
-          .reduce((props, [name, metaPropValues]) => {
-            props[name] = metaPropValues
-              ?.filter((metaPropValue) => !metaPropValue.deleted?.value)
+          .reduce((props, [name, metaProp]) => {
+            const values = metaProp?.values
+              ?.filter((metaPropValue) => !metaPropValue.deleted)
               .map((metaPropValue) => metaPropValue.value);
+
+            if (values != null && values.length > 0) {
+              props[name] = values;
+            }
 
             return props;
           }, {} as Partial<Record<string, string[]>>);
@@ -207,10 +218,195 @@ export class GameTree {
     return this.get(rootId)!;
   }
 
+  private applyQueuedChanges(id: Id): void {
+    const queue = this.queuedChanges.get(id) ?? [];
+
+    for (const change of queue) {
+      this.applyChange(change);
+    }
+
+    this.queuedChanges.delete(id);
+  }
+
+  private queueChange(id: Id, change: Change): void {
+    if (!this.queuedChanges.has(id)) {
+      this.queuedChanges.set(id, []);
+    }
+
+    this.queuedChanges.get(id)!.push(change);
+  }
+
   applyChange(change: Change): this {
     Enum.match(change, {
+      AppendNode: (data) => {
+        const timestamp = extractTimestamp(data);
+        const parentMetaNode = this.metaNodes.get(data.parent);
+        const metaNode = this.metaNodes.get(data.id);
+        let mergingMetaNode: MetaNode | undefined;
+
+        if (metaNode != null) {
+          // Found node with same id already
+          // Transform into an UpdateNode with an undelete operation instead
+
+          return this.applyChange(Change.UpdateNode({
+            ...timestamp,
+            id: data.id,
+            deleted: false,
+          }));
+        } else if (parentMetaNode == null) {
+          // Parent node may not be created yet, queue change for later
+
+          this.queueChange(data.parent, change);
+        } else if (
+          data.key != null &&
+          (mergingMetaNode = parentMetaNode.children
+              ?.map((id) => this.metaNodes.get(id))
+              .find(
+                (siblingMetaNode) => siblingMetaNode?.key === data.key,
+              )) != null
+        ) {
+          // Found sibling node with same key, thus merging required
+
+          conditionallyAssign(mergingMetaNode, {
+            ...timestamp,
+            position: {
+              ...timestamp,
+              value: data.position,
+            },
+          });
+
+          this.metaNodes.set(data.id, mergingMetaNode);
+          this.applyQueuedChanges(data.id);
+        } else {
+          // Add node
+
+          this.metaNodes.set(data.id, {
+            ...timestamp,
+            id: data.id,
+            key: data.key,
+            parent: data.parent,
+            level: parentMetaNode.level + 1,
+            position: {
+              ...timestamp,
+              value: data.position,
+            },
+          });
+
+          this.applyQueuedChanges(data.id);
+        }
+      },
+      UpdateNode: (data) => {
+        const metaNode = this.metaNodes.get(data.id);
+
+        if (metaNode == null) {
+          // Node not created yet, queue change
+
+          this.queueChange(data.id, change);
+        } else {
+          // Update node conditionally
+
+          const timestamp = extractTimestamp(data);
+
+          if (data.position != null) {
+            conditionallyAssign(metaNode.position, {
+              ...timestamp,
+              value: data.position,
+            });
+          }
+
+          if (data.deleted != null) {
+            const newDeleted = {
+              ...timestamp,
+              value: data.deleted,
+            };
+
+            if (metaNode.deleted == null) {
+              metaNode.deleted = newDeleted;
+            } else {
+              conditionallyAssign(metaNode.deleted, newDeleted);
+            }
+          }
+        }
+      },
+      UpdatePropertyValue: (data) => {
+        const metaNode = this.metaNodes.get(data.id);
+
+        if (metaNode == null) {
+          // Node not created yet, queue change
+
+          this.queueChange(data.id, change);
+        } else {
+          // Update property value conditionally
+
+          if (metaNode.props == null) metaNode.props = {};
+
+          const timestamp = extractTimestamp(data);
+          const metaProp = metaNode.props[data.prop];
+          const newMetaPropValue: MetaNodePropertyValue = {
+            ...timestamp,
+            value: data.value,
+            deleted: data.deleted,
+          };
+
+          if (metaProp == null) {
+            // No property values yet
+
+            metaNode.props[data.prop] = {
+              ...timestamp,
+              values: [newMetaPropValue],
+            };
+          } else if (compareTimestamps(metaProp, data) < 0) {
+            // We are allowed to apply our update
+
+            const metaPropValue = metaProp.values
+              .find((metaPropValue) => metaPropValue.value === data.value);
+
+            if (metaPropValue == null) {
+              metaProp.values.push(newMetaPropValue);
+            } else {
+              conditionallyAssign(metaPropValue, newMetaPropValue);
+            }
+          }
+        }
+      },
+      UpdateProperty: (data) => {
+        const metaNode = this.metaNodes.get(data.id);
+
+        if (metaNode == null) {
+          // Node not created yet, queue change
+
+          this.queueChange(data.id, change);
+        } else {
+          // Update property conditionally
+
+          if (metaNode.props == null) metaNode.props = {};
+
+          const timestamp = extractTimestamp(data);
+          const metaProp = metaNode.props[data.prop];
+          const retainingMetaPropValues = metaProp?.values
+            .filter((metaPropValue) =>
+              compareTimestamps(data, metaPropValue) < 0
+            ) ?? [];
+
+          const newMetaProp: MetaNodeProperty = {
+            ...timestamp,
+            values: data.values.map((value) => ({
+              ...timestamp,
+              value,
+            })),
+          };
+
+          newMetaProp.values.push(...retainingMetaPropValues);
+
+          if (metaProp == null) {
+            metaNode.props[data.prop] = newMetaProp;
+          } else {
+            conditionallyAssign(metaProp, newMetaProp);
+          }
+        }
+      },
       _: () => {
-        throw new Error(`Unknown change '${Object.keys(change)[0]}' applied`);
+        // Unknown change variant, just ignore
       },
     });
 
@@ -227,6 +423,7 @@ export class GameTree {
     });
 
     result.metaNodes = new Map(Object.entries(data.metaNodes));
+    result.queuedChanges = new Map(Object.entries(data.queuedChanges));
 
     return result;
   }
@@ -235,6 +432,7 @@ export class GameTree {
     return {
       timestamp: this.timestamp,
       metaNodes: Object.fromEntries(this.metaNodes),
+      queuedChanges: Object.fromEntries(this.queuedChanges),
     };
   }
 }
