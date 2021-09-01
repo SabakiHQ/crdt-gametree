@@ -15,10 +15,11 @@ import { comparePositions, createPosition } from "./fractionalPosition.ts";
 import {
   compareTimestamps,
   conditionallyAssign,
+  extractAuthorTimestamp,
   extractTimestamp,
 } from "./timestamp.ts";
 
-const rootId: Id = "R";
+const rootId = "R" as Id;
 
 export class GameTree {
   author: string;
@@ -45,7 +46,11 @@ export class GameTree {
     });
   }
 
-  tick(): number {
+  tick(timestamp?: number): number {
+    if (timestamp != null) {
+      this.timestamp = Math.max(this.timestamp, timestamp);
+    }
+
     return this.timestamp++;
   }
 
@@ -237,9 +242,17 @@ export class GameTree {
   }
 
   applyChange(change: Change): this {
+    this.tick(Enum.match<Change, number | undefined>(change, {
+      AppendNode: extractTimestamp,
+      UpdateNode: extractTimestamp,
+      UpdateProperty: extractTimestamp,
+      UpdatePropertyValue: extractTimestamp,
+      _: () => undefined,
+    }));
+
     Enum.match(change, {
       AppendNode: (data) => {
-        const timestamp = extractTimestamp(data);
+        const authorTimestamp = extractAuthorTimestamp(data);
         const parentMetaNode = this.metaNodes.get(data.parent);
         const metaNode = this.metaNodes.get(data.id);
         let mergingMetaNode: MetaNode | undefined;
@@ -249,7 +262,7 @@ export class GameTree {
           // Transform into an UpdateNode with an undelete operation instead
 
           return this.applyChange(Change.UpdateNode({
-            ...timestamp,
+            ...authorTimestamp,
             id: data.id,
             deleted: false,
           }));
@@ -268,9 +281,9 @@ export class GameTree {
           // Found sibling node with same key, thus merging required
 
           conditionallyAssign(mergingMetaNode, {
-            ...timestamp,
+            ...authorTimestamp,
             position: {
-              ...timestamp,
+              ...authorTimestamp,
               value: data.position,
             },
           });
@@ -281,13 +294,13 @@ export class GameTree {
           // Add node
 
           this.metaNodes.set(data.id, {
-            ...timestamp,
+            ...authorTimestamp,
             id: data.id,
             key: data.key,
             parent: data.parent,
             level: parentMetaNode.level + 1,
             position: {
-              ...timestamp,
+              ...authorTimestamp,
               value: data.position,
             },
           });
@@ -298,25 +311,27 @@ export class GameTree {
       UpdateNode: (data) => {
         const metaNode = this.metaNodes.get(data.id);
 
-        if (metaNode == null) {
+        if (data.id === rootId) {
+          // Ignore deletions/repositioning of root node
+        } else if (metaNode == null) {
           // Node not created yet, queue change
 
           this.queueChange(data.id, change);
         } else {
           // Update node conditionally
 
-          const timestamp = extractTimestamp(data);
+          const authorTimestamp = extractAuthorTimestamp(data);
 
           if (data.position != null) {
             conditionallyAssign(metaNode.position, {
-              ...timestamp,
+              ...authorTimestamp,
               value: data.position,
             });
           }
 
           if (data.deleted != null) {
             const newDeleted = {
-              ...timestamp,
+              ...authorTimestamp,
               value: data.deleted,
             };
 
@@ -340,10 +355,10 @@ export class GameTree {
 
           if (metaNode.props == null) metaNode.props = {};
 
-          const timestamp = extractTimestamp(data);
+          const authorTimestamp = extractAuthorTimestamp(data);
           const metaProp = metaNode.props[data.prop];
           const newMetaPropValue: MetaNodePropertyValue = {
-            ...timestamp,
+            ...authorTimestamp,
             value: data.value,
             deleted: data.deleted,
           };
@@ -352,7 +367,7 @@ export class GameTree {
             // No property values yet
 
             metaNode.props[data.prop] = {
-              ...timestamp,
+              ...authorTimestamp,
               values: [newMetaPropValue],
             };
           } else if (compareTimestamps(metaProp, data) < 0) {
@@ -381,7 +396,7 @@ export class GameTree {
 
           if (metaNode.props == null) metaNode.props = {};
 
-          const timestamp = extractTimestamp(data);
+          const authorTimestamp = extractAuthorTimestamp(data);
           const metaProp = metaNode.props[data.prop];
           const retainingMetaPropValues = metaProp?.values
             .filter((metaPropValue) =>
@@ -389,9 +404,9 @@ export class GameTree {
             ) ?? [];
 
           const newMetaProp: MetaNodeProperty = {
-            ...timestamp,
+            ...authorTimestamp,
             values: data.values.map((value) => ({
-              ...timestamp,
+              ...authorTimestamp,
               value,
             })),
           };
@@ -422,8 +437,12 @@ export class GameTree {
       timestamp: data.timestamp,
     });
 
-    result.metaNodes = new Map(Object.entries(data.metaNodes));
-    result.queuedChanges = new Map(Object.entries(data.queuedChanges));
+    result.metaNodes = new Map(
+      Object.entries(data.metaNodes) as [Id, MetaNode][],
+    );
+    result.queuedChanges = new Map(
+      Object.entries(data.queuedChanges) as [Id, Change[]][],
+    );
 
     return result;
   }

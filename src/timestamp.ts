@@ -17,7 +17,11 @@ export function compareTimestamps(
   );
 }
 
-export function extractTimestamp(x: Readonly<Timestamped>): Timestamped {
+export function extractTimestamp(x: Readonly<Timestamped>): number {
+  return x.timestamp;
+}
+
+export function extractAuthorTimestamp(x: Readonly<Timestamped>): Timestamped {
   return {
     author: x.author,
     timestamp: x.timestamp,
