@@ -4,7 +4,7 @@ import type { Timestamped, TimestampedValue } from "./timestamp.ts";
 
 declare const idTag: unique symbol;
 
-export type Id = string & { [idTag]?: true };
+export type Id = string & { [idTag]: true };
 
 export type Currents = Map<Id, Id>;
 
@@ -47,6 +47,6 @@ export interface Node extends Timestamped {
 
 export interface GameTreeJson {
   timestamp: number;
-  metaNodes: Partial<Record<Id, MetaNode>>;
-  queuedChanges: Partial<Record<Id, Change[]>>;
+  metaNodes: Record<string, MetaNode>;
+  queuedChanges: Record<string, Change[]>;
 }

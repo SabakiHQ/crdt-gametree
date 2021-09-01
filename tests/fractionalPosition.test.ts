@@ -1,5 +1,10 @@
 import { assert } from "../dev_deps.ts";
-import { comparePositions, createPosition, equalsPositions, FracPos } from "../src/fractionalPosition.ts";
+import {
+  comparePositions,
+  createPosition,
+  equalsPositions,
+  FracPos,
+} from "../src/fractionalPosition.ts";
 
 Deno.test({
   name: "Create new unanchored fractional position",
@@ -67,7 +72,9 @@ Deno.test({
     assert.assert(equalsPositions(null, null));
     assert.assert(!equalsPositions([[0, "yishn"]], [[1, "yishn"]]));
     assert.assert(!equalsPositions([[0, "simon"]], [[0, "yishn"]]));
-    assert.assert(!equalsPositions([[0, "yishn"], [0, "yishn"]], [[0, "yishn"]]));
+    assert.assert(
+      !equalsPositions([[0, "yishn"], [0, "yishn"]], [[0, "yishn"]]),
+    );
   },
 });
 
