@@ -24,7 +24,13 @@ import { Mutator } from "./Mutator.ts";
 
 const rootId = "R" as Id;
 
+/**
+ * A conflict-free replicated game tree data type.
+ */
 export class GameTree {
+  /**
+   * The unique author id of the game tree.
+   */
   author: string;
   private _timestamp: number;
   private _metaNodes: PartRecord<string, MetaNode> = {};
@@ -49,6 +55,10 @@ export class GameTree {
     };
   }
 
+  /**
+   * Advances the internal logical timestamp or sets it to given timestamp, and
+   * returns a usable, unused timestamp.
+   */
   tick(timestamp?: number): number {
     if (timestamp != null) {
       this._timestamp = Math.max(this._timestamp, timestamp);
@@ -57,6 +67,10 @@ export class GameTree {
     return this._timestamp++;
   }
 
+  /**
+   * Iterates through all ancestors parent by parent of the node with the
+   * given id.
+   */
   *ancestors(id: Id): Generator<Id> {
     let metaNode = this._metaNodes[id];
 
@@ -68,6 +82,9 @@ export class GameTree {
     }
   }
 
+  /**
+   * Iterates depth-first through all descendants of the node with the given id.
+   */
   *descendants(id: Id): Generator<Id> {
     // Depth first iteration of descendants
 
@@ -85,6 +102,10 @@ export class GameTree {
     }
   }
 
+  /**
+   * Iterates through the current descendants of the node with the given id
+   * along the given currents object.
+   */
   *currentDescendants(id: Id, currents?: Readonly<Currents>): Generator<Id> {
     let metaNode = this._metaNodes[id];
 
@@ -127,6 +148,11 @@ export class GameTree {
     }
   }
 
+  /**
+   * Returns the node id that is located a certain number of steps from the node
+   * with the given id along the given currents object. If step is negative, we
+   * move towards parent, otherwise towards current child.
+   */
   navigate(id: Id, step: number, currents?: Readonly<Currents>): Id | null {
     if (step === 0) return id;
 
@@ -149,6 +175,10 @@ export class GameTree {
     return lastResult;
   }
 
+  /**
+   * Determines whether the node with the given id is reachable from the root
+   * node by following along the given currents object.
+   */
   isCurrent(id: Id, currents?: Readonly<Currents>): boolean {
     const metaNode = this._metaNodes[id];
     if (metaNode == null) return false;
@@ -158,6 +188,11 @@ export class GameTree {
     return currentDescendantId != null && currentDescendantId === id;
   }
 
+  /**
+   * Returns the node with the given id or `null` if there is no such node. We
+   * do not check whether the node is still reachable from the root node, which
+   * might be the case if an ancestor node has been deleted.
+   */
   get(id: Id): Node | null {
     const metaNode = this._metaNodes[id];
     if (metaNode == null || metaNode.deleted?.value === true) return null;
@@ -222,6 +257,9 @@ export class GameTree {
     } as Node & { _parent?: Node | null };
   }
 
+  /**
+   * Returns the root node.
+   */
   getRoot(): Node {
     return this.get(rootId)!;
   }
@@ -246,6 +284,9 @@ export class GameTree {
     queue.push(change);
   }
 
+  /**
+   * Applies the given remote change to the tree.
+   */
   applyChange(change: TimestampedChange): this {
     this.tick(Enum.match<TimestampedChange, number | undefined>(change, {
       AppendNode: extractTimestamp,
@@ -433,6 +474,9 @@ export class GameTree {
     return this;
   }
 
+  /**
+   * Use this method to apply any local changes to the tree.
+   */
   mutate(fn: (mutator: Mutator) => void): MutateResult {
     const mutator = new Mutator(this);
 
@@ -441,6 +485,10 @@ export class GameTree {
     return mutator.result;
   }
 
+  /**
+   * Create a new `GameTree` instances using the given JSON object that
+   * represents the game tree state.
+   */
   static fromJSON(
     data: GameTreeJson,
     options: Readonly<GameTreeOptions>,
@@ -456,6 +504,10 @@ export class GameTree {
     return result;
   }
 
+  /**
+   * Returns a serializable JSON object that represents and changes with the
+   * game tree state.
+   */
   toJSON(): GameTreeJson {
     return {
       timestamp: this._timestamp,

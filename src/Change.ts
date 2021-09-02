@@ -42,9 +42,15 @@ type TimestampedChangeVariants = {
     & typeof ChangeVariants[K];
 };
 
+/**
+ * Represents a change that can be applied locally, but is not yet.
+ */
 export type Change = Enum<typeof ChangeVariants>;
 export const Change = Enum.factory<Change>(ChangeVariants);
 
+/**
+ * Represents a change that has been applied locally or remotely.
+ */
 export type TimestampedChange = Enum<TimestampedChangeVariants>;
 export const TimestampedChange = Enum.factory<TimestampedChange>(
   ChangeVariants,
