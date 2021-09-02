@@ -1,33 +1,17 @@
 import { Enum } from "../deps.ts";
-import { Change, TimestampedChange } from "./Change.ts";
+import { Change, extendWithAuthorTimestamp } from "./Change.ts";
 import type { GameTree } from "./GameTree.ts";
-import type { Timestamped } from "./timestamp.ts";
 import type { MutateResult } from "./types.ts";
 
 export class Mutator {
   constructor(private tree: GameTree, private result: MutateResult) {}
 
-  private extendAuthorTimestamp(change: Change): TimestampedChange {
-    const authorTimestamp: Timestamped = {
+  applyChange(change: Change): this {
+    const timestampedChange = extendWithAuthorTimestamp(change, {
       author: this.tree.author,
       timestamp: this.tree.tick(),
-    };
+    });
 
-    for (const key in change) {
-      const variant = key as keyof Change & string;
-
-      if (change[variant] != null) {
-        return {
-          [variant]: { ...authorTimestamp, ...change[variant] },
-        } as unknown as TimestampedChange;
-      }
-    }
-
-    throw new Error("Change object malformed");
-  }
-
-  applyChange(change: Change): this {
-    const timestampedChange = this.extendAuthorTimestamp(change);
     const inverseChange = Enum.match<Change, Change | null>(change, {
       AppendNode: (data) => {
         return Change.UpdateNode({
@@ -74,12 +58,12 @@ export class Mutator {
       },
     });
 
-    this.result.changes.push(timestampedChange);
     if (inverseChange != null) {
+      this.result.changes.push(timestampedChange);
       this.result.inverseChanges.unshift(inverseChange);
-    }
 
-    this.tree.applyChange(timestampedChange);
+      this.tree.applyChange(timestampedChange);
+    }
 
     return this;
   }

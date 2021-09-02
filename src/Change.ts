@@ -3,37 +3,37 @@ import type { FracPos } from "./fractionalPosition.ts";
 import type { Timestamped } from "./timestamp.ts";
 import type { Id, Key } from "./types.ts";
 
-type AppendNode = {
-  id: Id;
-  key?: Key;
-  parent: Id;
-  position: FracPos;
-};
-
-type UpdateNode = {
-  id: Id;
-  deleted?: boolean;
-  position?: FracPos;
-};
-
-type UpdatePropertyValue = {
-  id: Id;
-  prop: string;
-  value: string;
-  deleted: boolean;
-};
-
-type UpdateProperty = {
-  id: Id;
-  prop: string;
-  values: string[];
-};
-
 const ChangeVariants = {
-  AppendNode: ofType<Readonly<AppendNode>>(),
-  UpdateNode: ofType<Readonly<UpdateNode>>(),
-  UpdatePropertyValue: ofType<Readonly<UpdatePropertyValue>>(),
-  UpdateProperty: ofType<Readonly<UpdateProperty>>(),
+  AppendNode: ofType<
+    Readonly<{
+      id: Id;
+      key?: Key;
+      parent: Id;
+      position: FracPos;
+    }>
+  >(),
+  UpdateNode: ofType<
+    Readonly<{
+      id: Id;
+      deleted?: boolean;
+      position?: FracPos;
+    }>
+  >(),
+  UpdatePropertyValue: ofType<
+    Readonly<{
+      id: Id;
+      prop: string;
+      value: string;
+      deleted: boolean;
+    }>
+  >(),
+  UpdateProperty: ofType<
+    Readonly<{
+      id: Id;
+      prop: string;
+      values: string[];
+    }>
+  >(),
 };
 
 type TimestampedChangeVariants = {
@@ -49,3 +49,20 @@ export type TimestampedChange = Enum<TimestampedChangeVariants>;
 export const TimestampedChange = Enum.factory<TimestampedChange>(
   ChangeVariants,
 );
+
+export function extendWithAuthorTimestamp(
+  change: Change,
+  authorTimestamp: Timestamped,
+): TimestampedChange {
+  for (const key in change) {
+    const variant = key as keyof Change & string;
+
+    if (change[variant] != null) {
+      return {
+        [variant]: { ...authorTimestamp, ...change[variant] },
+      } as unknown as TimestampedChange;
+    }
+  }
+
+  return change as TimestampedChange;
+}
