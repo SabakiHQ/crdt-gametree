@@ -5,7 +5,12 @@ import type { GameTree } from "./GameTree.ts";
 import type { Id, Key, MutateResult } from "./types.ts";
 
 export class Mutator {
-  constructor(private tree: GameTree, private result: MutateResult) {}
+  result: MutateResult = {
+    changes: [],
+    inverseChanges: [],
+  };
+
+  constructor(private tree: GameTree) {}
 
   private _applyChange(timestamp: number, change: Change): boolean {
     const timestampedChange = extendWithAuthorTimestamp(change, {
@@ -64,9 +69,9 @@ export class Mutator {
 
     if (inverseChange != null) {
       this.result.changes.push(timestampedChange);
-      this.result.inverseChanges.unshift(inverseChange);
-
+      this.result.inverseChanges.push(inverseChange);
       this.tree.applyChange(timestampedChange);
+
       return true;
     }
 

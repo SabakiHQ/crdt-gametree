@@ -85,7 +85,7 @@ export class GameTree {
     }
   }
 
-  *currentDescendants(id: Id, currents?: Currents): Generator<Id> {
+  *currentDescendants(id: Id, currents?: Readonly<Currents>): Generator<Id> {
     let metaNode = this._metaNodes[id];
 
     while (
@@ -127,7 +127,7 @@ export class GameTree {
     }
   }
 
-  navigate(id: Id, step: number, currents?: Currents): Id | null {
+  navigate(id: Id, step: number, currents?: Readonly<Currents>): Id | null {
     if (step === 0) return id;
 
     let lastResult: Id | null = null;
@@ -149,7 +149,7 @@ export class GameTree {
     return lastResult;
   }
 
-  isCurrent(id: Id, currents?: Currents): boolean {
+  isCurrent(id: Id, currents?: Readonly<Currents>): boolean {
     const metaNode = this._metaNodes[id];
     if (metaNode == null) return false;
     if (metaNode.level === 0) return true;
@@ -434,14 +434,11 @@ export class GameTree {
   }
 
   mutate(fn: (mutator: Mutator) => void): MutateResult {
-    const result: MutateResult = {
-      changes: [],
-      inverseChanges: [],
-    };
+    const mutator = new Mutator(this);
 
-    fn(new Mutator(this, result));
+    fn(mutator);
 
-    return result;
+    return mutator.result;
   }
 
   static fromJSON(
