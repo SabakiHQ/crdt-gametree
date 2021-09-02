@@ -1,8 +1,4 @@
-export type CompareFunction<T> = (x: T, y: T) => -1 | 0 | 1;
-
-export function uuid(): string {
-  return crypto.randomUUID().replace(/-/g, "");
-}
+import type { CompareFunction } from "./types.ts";
 
 export function compare<T>(x: T, y: T): -1 | 0 | 1 {
   return x < y ? -1 : x > y ? 1 : 0;

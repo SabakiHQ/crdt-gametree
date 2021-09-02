@@ -14,6 +14,8 @@ export type Currents = PartRecord<string, Id>;
 
 export type Key = string | number;
 
+export type CompareFunction<T> = (x: T, y: T) => -1 | 0 | 1;
+
 export interface GameTreeOptions {
   author: string;
   timestamp?: number;

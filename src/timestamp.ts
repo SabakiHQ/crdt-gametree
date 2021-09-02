@@ -1,4 +1,4 @@
-import { compareLexically } from "./helper.ts";
+import { compareLexically, compareMap } from "./helper.ts";
 
 export interface Timestamped {
   author: string;
@@ -7,15 +7,10 @@ export interface Timestamped {
 
 export type TimestampedValue<T> = Timestamped & { value: T };
 
-export function compareTimestamps(
-  x: Readonly<Timestamped>,
-  y: Readonly<Timestamped>,
-): -1 | 0 | 1 {
-  return compareLexically<string | number>()(
-    [x.timestamp, x.author],
-    [y.timestamp, y.author],
-  );
-}
+export const compareTimestamps = compareMap(
+  (x: Readonly<Timestamped>) => [x.timestamp, x.author],
+  compareLexically<string | number>(),
+);
 
 export function extractTimestamp(x: Readonly<Timestamped>): number {
   return x.timestamp;

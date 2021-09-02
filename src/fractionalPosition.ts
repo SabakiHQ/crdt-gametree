@@ -1,13 +1,14 @@
 import { compareLexically } from "./helper.ts";
+import type { CompareFunction } from "./types.ts";
 
 export type FracPos = readonly [
   ...(readonly [number, string])[],
   readonly [number, string],
 ];
 
-export function comparePositions(pos1: FracPos, pos2: FracPos): -1 | 0 | 1 {
-  return compareLexically(compareLexically<number | string>())(pos1, pos2);
-}
+export const comparePositions = compareLexically(
+  compareLexically<number | string>(),
+) as CompareFunction<FracPos>;
 
 export function equalsPositions(pos1: FracPos | null, pos2: FracPos | null) {
   if (pos1 == null && pos1 == pos2) return true;
