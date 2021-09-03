@@ -12,10 +12,6 @@ export const compareTimestamps = compareMap(
   compareLexically<string | number>(),
 );
 
-export function extractTimestamp(x: Readonly<Timestamped>): number {
-  return x.timestamp;
-}
-
 export function extractAuthorTimestamp(x: Readonly<Timestamped>): Timestamped {
   return {
     author: x.author,

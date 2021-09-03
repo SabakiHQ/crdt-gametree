@@ -10,6 +10,9 @@ export class Mutator {
     inverseChanges: [],
   };
 
+  /**
+   * @internal
+   */
   constructor(private tree: GameTree) {}
 
   private _applyChange(timestamp: number, change: Change): boolean {
@@ -78,10 +81,18 @@ export class Mutator {
     return false;
   }
 
+  /**
+   * Applies the given local change to the game tree.
+   */
   applyChange(change: Change): boolean {
     return this._applyChange(this.tree.tick(), change);
   }
 
+  /**
+   * Appends a new node to the given parent. The key can be used to
+   * automatically merge with any sibling node with the same key.
+   * @returns The id of the new node or `null` if the change did not succeed.
+   */
   appendNode(parent: Id, key?: Key): Id | null {
     const parentNode = this.tree.get(parent);
     if (parentNode == null) return null;
@@ -106,6 +117,10 @@ export class Mutator {
     return success ? id : null;
   }
 
+  /**
+   * Deletes the node with the given id from the tree.
+   * @returns `true` if change succeeded, otherwise `false`.
+   */
   deleteNode(id: Id): boolean {
     return this.applyChange(Change.UpdateNode({
       id,
@@ -113,6 +128,13 @@ export class Mutator {
     }));
   }
 
+  /**
+   * Changes the position of the node with the given id among its siblings.
+   * @param direction - `"left"` to move the node one entry to the left,
+   * `"right"` to move the node one entry to the right, `"main"` to move the
+   * node to the first place.
+   * @returns `true` if change succeeded, otherwise `false`.
+   */
   shiftNode(id: Id, direction: "left" | "right" | "main"): boolean {
     const node = this.tree.get(id);
     if (node == null) return false;
@@ -120,9 +142,7 @@ export class Mutator {
 
     const siblings = node.parent.children();
     const siblingPositions = siblings
-      .map((sibling) =>
-        this.tree.getMetaNode(sibling.id)?.position.value
-      );
+      .map((sibling) => this.tree.getMetaNode(sibling.id)?.position.value);
 
     const index = siblings.findIndex((sibling) => sibling.id === id);
     const beforeIndex = direction === "left"
@@ -154,15 +174,29 @@ export class Mutator {
     }));
   }
 
+  /**
+   * Adds the given value to the specified prop of the node with the given id.
+   * This will ignore duplicate values.
+   * @returns `true` if change succeeded, otherwise `false`.
+   */
   addToProperty(id: Id, prop: string, value: string): boolean {
     return this.updatePropertyValue(id, prop, value, false);
   }
 
+  /**
+   * Removes the given value from the specified prop of the node with the
+   * given id.
+   * @returns `true` if change succeeded, otherwise `false`.
+   */
   removeFromProperty(id: Id, prop: string, value: string): boolean {
     return this.updatePropertyValue(id, prop, value, true);
   }
 
-  updateProperty(id: Id, prop: string, values: string[]): boolean {
+  /**
+   * Sets the specified prop of the node with the given id as values.
+   * @returns `true` if change succeeded, otherwise `false`.
+   */
+  updateProperty(id: Id, prop: string, values: readonly string[]): boolean {
     return this.applyChange(Change.UpdateProperty({
       id,
       prop,
@@ -170,6 +204,10 @@ export class Mutator {
     }));
   }
 
+  /**
+   * Removes the specified prop of the node with the given id.
+   * @returns `true` if change succeeded, otherwise `false`.
+   */
   removeProperty(id: Id, prop: string): boolean {
     return this.updateProperty(id, prop, []);
   }

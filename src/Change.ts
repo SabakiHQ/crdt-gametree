@@ -1,6 +1,9 @@
 import { Enum, ofType } from "../deps.ts";
 import type { FracPos } from "./fractionalPosition.ts";
-import type { Timestamped } from "./timestamp.ts";
+import {
+  Timestamped,
+  TimestampedValue,
+} from "./timestamp.ts";
 import type { Id, Key } from "./types.ts";
 
 const ChangeVariants = {
@@ -31,15 +34,9 @@ const ChangeVariants = {
     Readonly<{
       id: Id;
       prop: string;
-      values: string[];
+      values: readonly string[];
     }>
   >(),
-};
-
-type TimestampedChangeVariants = {
-  [K in keyof typeof ChangeVariants]:
-    & Readonly<Timestamped>
-    & typeof ChangeVariants[K];
 };
 
 /**
@@ -51,24 +48,18 @@ export const Change = Enum.factory<Change>(ChangeVariants);
 /**
  * Represents a change that has been applied locally or remotely.
  */
-export type TimestampedChange = Enum<TimestampedChangeVariants>;
-export const TimestampedChange = Enum.factory<TimestampedChange>(
-  ChangeVariants,
-);
+export type TimestampedChange = Readonly<TimestampedValue<Change>>;
 
+/**
+ * Elevates the given `Change` to a `TimestampedChange` using the
+ * given `Timestamped`.
+ */
 export function extendWithAuthorTimestamp(
   change: Change,
   authorTimestamp: Timestamped,
 ): TimestampedChange {
-  for (const key in change) {
-    const variant = key as keyof Change & string;
-
-    if (change[variant] != null) {
-      return {
-        [variant]: { ...authorTimestamp, ...change[variant] },
-      } as unknown as TimestampedChange;
-    }
-  }
-
-  return change as TimestampedChange;
+  return {
+    ...authorTimestamp,
+    value: change,
+  };
 }
