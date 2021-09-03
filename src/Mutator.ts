@@ -1,5 +1,5 @@
 import { Enum } from "../deps.ts";
-import { Change, extendWithAuthorTimestamp } from "./Change.ts";
+import { Change, extendChangeWithTimestamp } from "./Change.ts";
 import { createPosition } from "./fractionalPosition.ts";
 import type { GameTree } from "./GameTree.ts";
 import type { Id, Key, MutateResult } from "./types.ts";
@@ -16,7 +16,7 @@ export class Mutator {
   constructor(private tree: GameTree) {}
 
   private _applyChange(timestamp: number, change: Change): boolean {
-    const timestampedChange = extendWithAuthorTimestamp(change, {
+    const timestampedChange = extendChangeWithTimestamp(change, {
       author: this.tree.author,
       timestamp: timestamp,
     });
@@ -39,6 +39,14 @@ export class Mutator {
           id: data.id,
           deleted: !!metaNode.deleted?.value,
           position: metaNode.position.value,
+        });
+      },
+      UpdateRoot: (data) => {
+        const metaNode = this.tree.getMetaNode(data.id);
+        if (metaNode == null) return null;
+
+        return Change.UpdateRoot({
+          id: this.tree.rootId,
         });
       },
       UpdateProperty: (data) => {
@@ -122,9 +130,23 @@ export class Mutator {
    * @returns `true` if change succeeded, otherwise `false`.
    */
   deleteNode(id: Id): boolean {
+    if (this.tree.equalsId(id, this.tree.rootId)) return false;
+
     return this.applyChange(Change.UpdateNode({
       id,
       deleted: true,
+    }));
+  }
+
+  /**
+   * Makes the node with the given id the new root node of the tree.
+   * @returns `true` if change succeeded, otherwise `false`.
+   */
+  updateRoot(id: Id): boolean {
+    if (this.tree.equalsId(id, this.tree.rootId)) return true;
+
+    return this.applyChange(Change.UpdateRoot({
+      id,
     }));
   }
 
@@ -144,7 +166,9 @@ export class Mutator {
     const siblingPositions = siblings
       .map((sibling) => this.tree.getMetaNode(sibling.id)?.position.value);
 
-    const index = siblings.findIndex((sibling) => sibling.id === id);
+    const index = siblings.findIndex((sibling) =>
+      this.tree.equalsId(sibling.id, id)
+    );
     const beforeIndex = direction === "left"
       ? index - 2
       : direction === "right"

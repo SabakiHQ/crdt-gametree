@@ -97,6 +97,7 @@ export interface MutateResult {
 
 export interface GameTreeState {
   timestamp: number;
+  rootId: TimestampedValue<Id>;
   metaNodes: PartRecord<string, MetaNode>;
   idAliases: PartRecord<string, Id>;
   queuedChanges: PartRecord<string, TimestampedChange[]>;

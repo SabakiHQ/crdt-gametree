@@ -1,7 +1,7 @@
 import { Enum } from "../deps.ts";
 import {
   Change,
-  extendWithAuthorTimestamp,
+  extendChangeWithTimestamp,
   TimestampedChange,
 } from "./Change.ts";
 import type {
@@ -25,7 +25,7 @@ import {
 } from "./timestamp.ts";
 import { Mutator } from "./Mutator.ts";
 
-const rootId = "R" as Id;
+const defaultRootId = "R" as Id;
 
 /**
  * A conflict-free replicated game tree data type.
@@ -38,6 +38,11 @@ export class GameTree {
 
   private state: GameTreeState = {
     timestamp: 1,
+    rootId: {
+      author: defaultRootId,
+      timestamp: 0,
+      value: defaultRootId,
+    },
     metaNodes: {},
     idAliases: {},
     queuedChanges: {},
@@ -49,17 +54,21 @@ export class GameTree {
 
     // Create root node
 
-    this.state.metaNodes[rootId] = {
-      id: rootId,
+    this.state.metaNodes[defaultRootId] = {
+      id: defaultRootId,
       author: this.author,
       timestamp: 0,
       level: 0,
       position: {
-        author: rootId,
+        author: defaultRootId,
         timestamp: 0,
-        value: createPosition(rootId, null, null),
+        value: createPosition(defaultRootId, null, null),
       },
     };
+  }
+
+  get rootId(): Id {
+    return this.state.rootId.value;
   }
 
   /**
@@ -78,126 +87,17 @@ export class GameTree {
   }
 
   /**
-   * Iterates through all ancestors parent by parent of the node with the
-   * given id.
+   * Determines whether the two given ids point to the same node or not.
    */
-  *ancestors(id: Id): Generator<Id> {
-    let metaNode = this.getMetaNode(id);
-
-    while (metaNode != null && metaNode.parent != null) {
-      metaNode = this.getMetaNode(metaNode.parent);
-      if (metaNode == null || metaNode.deleted?.value === true) return;
-
-      yield metaNode.id;
-    }
+  equalsId(x: Id, y: Id): boolean {
+    return x === y ||
+      this.state.idAliases[x] === y ||
+      this.state.idAliases[y] === x;
   }
 
   /**
-   * Iterates depth-first through all descendants of the node with the given id.
+   * Returns the underlying meta information of the given node id.
    */
-  *descendants(id: Id): Generator<Id> {
-    // Depth first iteration of descendants
-
-    const stack = [id];
-
-    while (stack.length > 0) {
-      const stackId = stack.pop()!;
-      const metaNode = this.getMetaNode(stackId);
-
-      if (metaNode != null && !metaNode.deleted?.value) {
-        if (stackId !== id) yield stackId;
-
-        stack.push(...metaNode.children ?? []);
-      }
-    }
-  }
-
-  /**
-   * Iterates through the current descendants of the node with the given id
-   * along the given currents object.
-   */
-  *currentDescendants(id: Id, currents?: Readonly<Currents>): Generator<Id> {
-    let metaNode = this.getMetaNode(id);
-
-    while (
-      metaNode != null &&
-      metaNode.children != null &&
-      metaNode.children.length > 0
-    ) {
-      const currentChildId = (() => {
-        const currentChildId = currents?.[metaNode.id];
-        const childrenMetaNodes = metaNode.children
-          .map((id) => this.getMetaNode(id))
-          .filter((metaNode): metaNode is MetaNode =>
-            metaNode != null && !metaNode.deleted?.value
-          );
-
-        if (
-          currentChildId != null &&
-          childrenMetaNodes.some((childMetaNode) =>
-            childMetaNode.id === currentChildId
-          )
-        ) {
-          return currentChildId;
-        }
-
-        // If no current child is given, use left most child node
-
-        return min(
-          compareMap(
-            (metaNode: MetaNode) => metaNode.position.value,
-            comparePositions,
-          ),
-        )(...childrenMetaNodes)?.id;
-      })();
-
-      if (currentChildId == null) break;
-      yield currentChildId;
-
-      metaNode = this.getMetaNode(currentChildId);
-    }
-  }
-
-  /**
-   * Returns the node id that is located a certain number of steps from the node
-   * with the given id along the given currents object. If step is negative, we
-   * move towards parent, otherwise towards current child.
-   */
-  navigate(id: Id, step: number, currents?: Readonly<Currents>): Id | null {
-    if (step === 0) return id;
-
-    let lastResult: Id | null = null;
-
-    if (step < 0) {
-      for (const result of this.ancestors(id)) {
-        lastResult = result;
-        step++;
-        if (step === 0) return result;
-      }
-    } else if (step > 0) {
-      for (const result of this.currentDescendants(id, currents)) {
-        lastResult = result;
-        step--;
-        if (step === 0) return result;
-      }
-    }
-
-    return lastResult;
-  }
-
-  /**
-   * Determines whether the node with the given id is reachable from the root
-   * node by following along the given currents object.
-   */
-  isCurrent(id: Id, currents?: Readonly<Currents>): boolean {
-    const metaNode = this.getMetaNode(id);
-    if (metaNode == null) return false;
-    if (metaNode.level === 0) return true;
-
-    const currentDescendantId = this.navigate(rootId, metaNode.level, currents);
-    return currentDescendantId != null && currentDescendantId === id;
-  }
-
   getMetaNode(id: Id): MetaNode | null {
     let metaNode = this.state.metaNodes[id];
     let idAlias: Id | undefined;
@@ -216,7 +116,20 @@ export class GameTree {
    */
   get(id: Id): Node | null {
     const metaNode = this.getMetaNode(id);
-    if (metaNode == null || metaNode.deleted?.value === true) return null;
+    const rootMetaNode = this.getMetaNode(this.rootId)!;
+
+    if (metaNode == null) return null;
+    if (metaNode !== rootMetaNode && !!metaNode.deleted?.value) {
+      // Root node cannot be considered deleted
+      return null;
+    }
+    if (
+      metaNode !== rootMetaNode &&
+      metaNode.level <= rootMetaNode.level
+    ) {
+      // Impossible to be a descendant of current root node
+      return null;
+    }
 
     const self = this;
 
@@ -225,25 +138,29 @@ export class GameTree {
       key: metaNode.key,
       author: metaNode.author,
       timestamp: metaNode.timestamp,
-      level: metaNode.level,
+
+      get level() {
+        return metaNode!.level - self.getMetaNode(self.rootId)!.level;
+      },
 
       get parent() {
         if (this._parent === undefined) {
-          return this._parent = metaNode?.parent == null
-            ? null
-            : self.get(metaNode.parent);
+          return this._parent =
+            metaNode?.parent == null || self.equalsId(id, self.rootId)
+              ? null
+              : self.get(metaNode.parent);
         }
 
         return this._parent;
       },
 
       isolated() {
-        if (id === rootId) return false;
+        if (self.equalsId(id, self.rootId)) return false;
 
         // Find whether there is a deleted ancestor
 
-        for (const ancestorId of self.ancestors(id)) {
-          if (ancestorId === rootId) return false;
+        for (const ancestor of self.ancestors(id)) {
+          if (self.equalsId(ancestor.id, self.rootId)) return false;
         }
 
         return true;
@@ -251,14 +168,14 @@ export class GameTree {
 
       children() {
         return (metaNode?.children ?? [])
+          .map((id) => self.get(id))
+          .filter((node): node is Node => node != null)
           .sort(
             compareMap(
-              (id) => self.getMetaNode(id)!.position.value,
+              (node) => self.getMetaNode(node.id)!.position.value,
               comparePositions,
             ),
-          )
-          .map((id) => self.get(id))
-          .filter((node): node is Node => node != null);
+          );
       },
 
       props() {
@@ -282,7 +199,122 @@ export class GameTree {
    * Returns the root node.
    */
   getRoot(): Node {
-    return this.get(rootId)!;
+    return this.get(this.rootId)!;
+  }
+
+  /**
+   * Iterates through all ancestors parent by parent of the node with the
+   * given id.
+   */
+  *ancestors(id: Id): Generator<Node> {
+    let node = this.get(id);
+
+    while (node != null && node.parent != null) {
+      node = node.parent;
+      if (node == null) return;
+
+      yield node;
+    }
+  }
+
+  /**
+   * Iterates depth-first through all descendants of the node with the given id.
+   */
+  *descendants(id: Id): Generator<Node> {
+    const node = this.get(id);
+    if (node == null) return;
+
+    // Depth first iteration of descendants
+
+    const stack = [node];
+
+    while (stack.length > 0) {
+      const stackNode = stack.pop()!;
+
+      if (stackNode != null) {
+        if (stackNode.id !== id) yield stackNode;
+
+        stack.push(...stackNode.children() ?? []);
+      }
+    }
+  }
+
+  /**
+   * Iterates through the current descendants of the node with the given id
+   * along the given currents object.
+   */
+  *currentDescendants(id: Id, currents?: Readonly<Currents>): Generator<Node> {
+    let node = this.get(id);
+
+    while (node != null) {
+      const children = node.children();
+      if (children.length === 0) break;
+
+      const currentChild = (() => {
+        const currentChildId = currents?.[node.id];
+        let currentChild: Node | undefined;
+
+        if (
+          currentChildId != null &&
+          (currentChild = children
+              .find((child) => this.equalsId(child.id, currentChildId))) != null
+        ) {
+          return currentChild;
+        }
+
+        // If no current child is given, use left most child node
+
+        return children[0];
+      })();
+
+      yield currentChild;
+
+      node = currentChild;
+    }
+  }
+
+  /**
+   * Returns the node that is located a certain number of steps from the node
+   * with the given id along the given currents object. If step is negative, we
+   * move towards parent, otherwise towards current child.
+   */
+  navigate(id: Id, step: number, currents?: Readonly<Currents>): Node | null {
+    if (step === 0) return this.get(id);
+
+    let lastResult: Node | null = null;
+
+    if (step < 0) {
+      for (const result of this.ancestors(id)) {
+        lastResult = result;
+        step++;
+        if (step === 0) return result;
+      }
+    } else if (step > 0) {
+      for (const result of this.currentDescendants(id, currents)) {
+        lastResult = result;
+        step--;
+        if (step === 0) return result;
+      }
+    }
+
+    return lastResult;
+  }
+
+  /**
+   * Determines whether the node with the given id is reachable from the root
+   * node by following along the given currents object.
+   */
+  isCurrent(id: Id, currents?: Readonly<Currents>): boolean {
+    const node = this.get(id);
+    if (node == null) return false;
+
+    const currentDescendant = this.navigate(
+      this.rootId,
+      node.level,
+      currents,
+    );
+
+    return currentDescendant != null && this.equalsId(currentDescendant.id, id);
   }
 
   private applyQueuedChanges(id: Id): void {
@@ -317,14 +349,14 @@ export class GameTree {
       AppendNode: (data) => {
         const parentMetaNode = this.getMetaNode(data.parent);
         const metaNode = this.getMetaNode(data.id);
-        let mergingMetaNode: MetaNode | null;
+        let mergingMetaNode: MetaNode | undefined;
 
         if (metaNode != null) {
           // Found node with same id already
           // Transform into an UpdateNode with an undelete operation instead
 
           return this.applyChange(
-            extendWithAuthorTimestamp(
+            extendChangeWithTimestamp(
               Change.UpdateNode({
                 id: data.id,
                 deleted: false,
@@ -342,7 +374,7 @@ export class GameTree {
               ?.map((id) => this.getMetaNode(id))
               .find(
                 (siblingMetaNode) => siblingMetaNode?.key === data.key,
-              ) ?? null) != null
+              ) ?? undefined) != null
         ) {
           // Found sibling node with same key, thus merging required
 
@@ -377,9 +409,7 @@ export class GameTree {
       UpdateNode: (data) => {
         const metaNode = this.getMetaNode(data.id);
 
-        if (data.id === rootId) {
-          // Ignore deletions/repositioning of root node
-        } else if (metaNode == null) {
+        if (metaNode == null) {
           // Node not created yet, queue change
 
           this.queueChange(data.id, change);
@@ -405,6 +435,22 @@ export class GameTree {
               conditionallyAssign(metaNode.deleted, newDeleted);
             }
           }
+        }
+      },
+      UpdateRoot: (data) => {
+        const metaNode = this.getMetaNode(data.id);
+
+        if (metaNode == null) {
+          // Node not created yet, queue change
+
+          this.queueChange(data.id, change);
+        } else {
+          // Update root conditionally
+
+          conditionallyAssign(this.state.rootId, {
+            ...authorTimestamp,
+            value: data.id,
+          });
         }
       },
       UpdatePropertyValue: (data) => {
@@ -510,7 +556,7 @@ export class GameTree {
     options: Readonly<GameTreeOptions>,
   ): GameTree {
     const tree = new GameTree(options);
-    tree.state = data
+    tree.state = data;
 
     return tree;
   }

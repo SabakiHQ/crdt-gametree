@@ -1,9 +1,6 @@
 import { Enum, ofType } from "../deps.ts";
 import type { FracPos } from "./fractionalPosition.ts";
-import {
-  Timestamped,
-  TimestampedValue,
-} from "./timestamp.ts";
+import { Timestamped, TimestampedValue } from "./timestamp.ts";
 import type { Id, Key } from "./types.ts";
 
 const ChangeVariants = {
@@ -20,6 +17,11 @@ const ChangeVariants = {
       id: Id;
       deleted?: boolean;
       position?: FracPos;
+    }>
+  >(),
+  UpdateRoot: ofType<
+    Readonly<{
+      id: Id;
     }>
   >(),
   UpdatePropertyValue: ofType<
@@ -54,7 +56,7 @@ export type TimestampedChange = Readonly<TimestampedValue<Change>>;
  * Elevates the given `Change` to a `TimestampedChange` using the
  * given `Timestamped`.
  */
-export function extendWithAuthorTimestamp(
+export function extendChangeWithTimestamp(
   change: Change,
   authorTimestamp: Timestamped,
 ): TimestampedChange {
