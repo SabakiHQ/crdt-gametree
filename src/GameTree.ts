@@ -9,6 +9,7 @@ import type {
   GameTreeOptions,
   GameTreeState,
   Id,
+  JsonNode,
   MetaNode,
   MetaNodeProperty,
   MetaNodePropertyValue,
@@ -16,12 +17,13 @@ import type {
   Node,
   PartRecord,
 } from "./types.ts";
-import { compareMap, min } from "./helper.ts";
+import { compareMap } from "./helper.ts";
 import { comparePositions, createPosition } from "./fractionalPosition.ts";
 import {
   compareTimestamps,
   conditionallyAssign,
   extractAuthorTimestamp,
+  Timestamped,
 } from "./timestamp.ts";
 import { Mutator } from "./Mutator.ts";
 
@@ -36,39 +38,59 @@ export class GameTree {
    */
   author: string;
 
-  private state: GameTreeState = {
-    timestamp: 1,
-    rootId: {
-      author: defaultRootId,
-      timestamp: 0,
-      value: defaultRootId,
-    },
-    metaNodes: {},
-    idAliases: {},
-    queuedChanges: {},
-  };
+  private state: GameTreeState;
+  private _lastChange: Readonly<Timestamped> | TimestampedChange;
+  private _lastStructuralChange: Readonly<Timestamped> | TimestampedChange;
 
   constructor(options: Readonly<GameTreeOptions>) {
     this.author = options.author;
-    this.state.timestamp = Math.max(options.timestamp ?? 1, 1);
 
-    // Create root node
-
-    this.state.metaNodes[defaultRootId] = {
-      id: defaultRootId,
-      author: this.author,
+    const rootAuthorTimestamp: Timestamped = {
       timestamp: 0,
-      level: 0,
-      position: {
-        author: defaultRootId,
-        timestamp: 0,
-        value: createPosition(defaultRootId, null, null),
-      },
+      author: defaultRootId,
     };
+
+    this.state = options.state ?? {
+      timestamp: 1,
+      rootId: { ...rootAuthorTimestamp, value: defaultRootId },
+      metaNodes: {
+        [defaultRootId]: {
+          ...rootAuthorTimestamp,
+          id: defaultRootId,
+          level: 0,
+          position: {
+            ...rootAuthorTimestamp,
+            value: createPosition(defaultRootId, null, null),
+          },
+        },
+      },
+      idAliases: {},
+      queuedChanges: {},
+    };
+
+    this._lastChange = this._lastStructuralChange = rootAuthorTimestamp;
   }
 
+  /**
+   * The id of the root node.
+   */
   get rootId(): Id {
     return this.state.rootId.value;
+  }
+
+  /**
+   * The last change applied to the tree.
+   */
+  get lastChange(): Readonly<Timestamped> | TimestampedChange {
+    return this._lastChange;
+  }
+
+  /**
+   * The timestamp of the last change applied to the tree that affected the
+   * tree structure.
+   */
+  get lastStructuralChange(): Readonly<Timestamped> | TimestampedChange {
+    return this._lastStructuralChange;
   }
 
   /**
@@ -403,6 +425,7 @@ export class GameTree {
             },
           };
 
+          this._lastStructuralChange = change;
           this.applyQueuedChanges(data.id);
         }
       },
@@ -421,6 +444,8 @@ export class GameTree {
               ...authorTimestamp,
               value: data.position,
             });
+
+            this._lastStructuralChange = change;
           }
 
           if (data.deleted != null) {
@@ -434,6 +459,8 @@ export class GameTree {
             } else {
               conditionallyAssign(metaNode.deleted, newDeleted);
             }
+
+            this._lastStructuralChange = change;
           }
         }
       },
@@ -451,6 +478,8 @@ export class GameTree {
             ...authorTimestamp,
             value: data.id,
           });
+
+          this._lastStructuralChange = change;
         }
       },
       UpdatePropertyValue: (data) => {
@@ -533,6 +562,8 @@ export class GameTree {
       },
     });
 
+    this._lastChange = change;
+
     return this;
   }
 
@@ -548,24 +579,34 @@ export class GameTree {
   }
 
   /**
-   * Create a new `GameTree` instances using the given JSON object that
-   * represents the game tree state.
+   * Returns a JSON object that represents the game tree state for
+   * serialization purposes.
    */
-  static fromJSON(
-    data: GameTreeState,
-    options: Readonly<GameTreeOptions>,
-  ): GameTree {
-    const tree = new GameTree(options);
-    tree.state = data;
-
-    return tree;
+  getState(): GameTreeState {
+    return this.state;
   }
 
   /**
-   * Returns a serializable JSON object that represents and changes with the
-   * game tree state.
+   * Returns a JSON object that represents the node with the given id and all
+   * its descendants.
    */
-  toJSON(): GameTreeState {
-    return this.state;
+  toJSON(id: Id = this.rootId): JsonNode | null {
+    const node = this.get(id);
+    if (node == null) return null;
+
+    const nodeToJson = (node: Node): JsonNode => ({
+      id: node.id,
+      parent: node.parent?.id,
+      key: node.key,
+      level: node.level,
+      get props() {
+        return node.props();
+      },
+      get children() {
+        return node.children().map((child) => nodeToJson(child));
+      },
+    });
+
+    return nodeToJson(node);
   }
 }
