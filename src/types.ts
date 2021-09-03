@@ -95,8 +95,9 @@ export interface MutateResult {
   inverseChanges: Change[];
 }
 
-export interface GameTreeJson {
+export interface GameTreeState {
   timestamp: number;
-  metaNodes: Readonly<PartRecord<string, MetaNode>>;
-  queuedChanges: Readonly<PartRecord<string, TimestampedChange[]>>;
+  metaNodes: PartRecord<string, MetaNode>;
+  idAliases: PartRecord<string, Id>;
+  queuedChanges: PartRecord<string, TimestampedChange[]>;
 }

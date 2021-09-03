@@ -20,7 +20,7 @@ export class Mutator {
 
     const inverseChange = Enum.match<Change, Change | null>(change, {
       AppendNode: (data) => {
-        const metaNode = this.tree.toJSON().metaNodes[data.id];
+        const metaNode = this.tree.getMetaNode(data.id);
         if (metaNode != null) return null;
 
         return Change.UpdateNode({
@@ -29,7 +29,7 @@ export class Mutator {
         });
       },
       UpdateNode: (data) => {
-        const metaNode = this.tree.toJSON().metaNodes[data.id];
+        const metaNode = this.tree.getMetaNode(data.id);
         if (metaNode == null) return null;
 
         return Change.UpdateNode({
@@ -39,7 +39,7 @@ export class Mutator {
         });
       },
       UpdateProperty: (data) => {
-        const metaNode = this.tree.toJSON().metaNodes[data.id];
+        const metaNode = this.tree.getMetaNode(data.id);
         if (metaNode == null) return null;
 
         const oldValues = metaNode.props?.[data.prop]?.values
@@ -53,7 +53,7 @@ export class Mutator {
         });
       },
       UpdatePropertyValue: (data) => {
-        const metaNode = this.tree.toJSON().metaNodes[data.id];
+        const metaNode = this.tree.getMetaNode(data.id);
         if (metaNode == null) return null;
 
         return Change.UpdatePropertyValue({
@@ -91,7 +91,7 @@ export class Mutator {
     const rightMostSibling = parentNode.children().slice(-1)[0]?.id;
     const beforePos = rightMostSibling == null
       ? null
-      : this.tree.toJSON().metaNodes[rightMostSibling]?.position.value ?? null;
+      : this.tree.getMetaNode(rightMostSibling)?.position.value ?? null;
 
     const success = this._applyChange(
       timestamp,
@@ -121,7 +121,7 @@ export class Mutator {
     const siblings = node.parent.children();
     const siblingPositions = siblings
       .map((sibling) =>
-        this.tree.toJSON().metaNodes[sibling.id]?.position.value
+        this.tree.getMetaNode(sibling.id)?.position.value
       );
 
     const index = siblings.findIndex((sibling) => sibling.id === id);
