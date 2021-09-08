@@ -200,14 +200,18 @@ export class GameTree {
           );
       },
 
-      props() {
-        return Object.entries(metaNode?.props ?? {})
-          .reduce((props, [name, metaProp]) => {
-            const values = metaProp?.values
-              ?.filter((metaPropValue) => !metaPropValue.deleted)
-              .map((metaPropValue) => metaPropValue.value);
+      prop(name: string) {
+        return metaNode?.props?.[name]?.values
+          ?.filter((metaPropValue) => !metaPropValue.deleted)
+          .map((metaPropValue) => metaPropValue.value) ?? [];
+      },
 
-            if (values != null && values.length > 0) {
+      props() {
+        return Object.keys(metaNode?.props ?? {})
+          .reduce((props, name) => {
+            const values = this.prop(name);
+
+            if (values.length > 0) {
               props[name] = values;
             }
 

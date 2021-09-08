@@ -138,6 +138,10 @@ export interface Node extends Timestamped {
    */
   isolated(): boolean;
   /**
+   * Returns the values of the given prop.
+   */
+  prop(name: string): string[];
+  /**
    * Returns a map of all properties and their values of the node.
    */
   props(): PartRecord<string, [string, ...string[]]>;
