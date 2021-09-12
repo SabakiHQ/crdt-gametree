@@ -417,6 +417,12 @@ export class GameTree {
         } else {
           // Add node
 
+          if (parentMetaNode.children == null) {
+            parentMetaNode.children = [];
+          }
+
+          parentMetaNode.children.push(data.id);
+
           this.state.metaNodes[data.id] = {
             ...authorTimestamp,
             id: data.id,
