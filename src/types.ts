@@ -2,16 +2,16 @@ import type { Change, TimestampedChange } from "./Change.ts";
 import type { FracPos } from "./fractionalPosition.ts";
 import type { Timestamped, TimestampedValue } from "./timestamp.ts";
 
-declare const idTag: unique symbol;
-
 export type PartRecord<T extends string | number | symbol, U> = Partial<
   Record<T, U>
 >;
 
+interface IdTag {}
+
 /**
  * Represents a node id.
  */
-export type Id = string & { [idTag]: true };
+export type Id = string & IdTag;
 
 /**
  * Any node can have a current child. With a `Currents` object you can specify
