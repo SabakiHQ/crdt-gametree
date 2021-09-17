@@ -260,7 +260,7 @@ export class GameTree {
       if (stackNode != null) {
         if (stackNode.id !== id) yield stackNode;
 
-        stack.push(...stackNode.children() ?? []);
+        stack.push(...stackNode.children().reverse() ?? []);
       }
     }
   }
