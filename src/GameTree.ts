@@ -300,6 +300,20 @@ export class GameTree {
   }
 
   /**
+   * Iterates through the levels of the game tree, yielding an array of all
+   * nodes on a level.
+   */
+  *levels(): Generator<Node[]> {
+    let nodes = [this.getRoot()];
+
+    while (nodes.length > 0) {
+      yield nodes;
+
+      nodes = nodes.flatMap((node) => node.children());
+    }
+  }
+
+  /**
    * Returns the node that is located a certain number of steps from the node
    * with the given id along the given currents object. If step is negative, we
    * move towards parent, otherwise towards current child.
